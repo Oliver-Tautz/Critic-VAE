@@ -395,7 +395,7 @@ def load_minerl_data(critic, recon_dset=False, vae=None):
     print("loading minerl-data...")
 
     ### Initialize mineRL dataset ###
-    os.environ['MINERL_DATA_ROOT'] = MINERL_DATA_ROOT_PATH
+    #os.environ['MINERL_DATA_ROOT'] = MINERL_DATA_ROOT_PATH
     data = minerl.data.make('MineRLTreechop-v0', num_workers=1)
 
     trajectory_names = data.get_trajectory_names()
