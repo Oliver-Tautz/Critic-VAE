@@ -20,6 +20,8 @@ from vae_parameters import *
 from vae_nets import *
 from vae_utility import *
 
+from tqdm import trange
+
 parser = argparse.ArgumentParser()
 parser.add_argument('-train', action='store_true') # train
 parser.add_argument('-inject', action='store_true') # show recons of samples
@@ -37,11 +39,11 @@ def train(autoencoder, dset, logger=None):
     num_samples = dset.shape[0]
 
     # Start training
-    for ep in range(epochs): # change
+    for ep in trange(epochs,desc='train_epochs'): # change
         epoch_indices = np.arange(num_samples)
         np.random.shuffle(epoch_indices)
 
-        for batch_i in range(0, num_samples, batch_size):
+        for batch_i in trange(0, num_samples, batch_size,desc='train_batches'):
             # NOTE: this will cut off incomplete batches from end of the random indices
             batch_indices = epoch_indices[batch_i:batch_i + batch_size]
             images = dset[batch_indices]
