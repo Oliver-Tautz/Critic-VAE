@@ -15,7 +15,8 @@ from vae_parameters import *
 from vae_nets import *
 
 THRESHOLD = 50
-font = ImageFont.truetype("/usr/share/fonts/truetype/ubuntu/Ubuntu-R.ttf", 10)
+#font = ImageFont.truetype("/usr/share/fonts/truetype/ubuntu/Ubuntu-R.ttf", 10)
+font = = ImageFont.load_default()
 titles = ["orig img\n+crit val", "crit val\ninjected", "crit=0\ninjected", "difference\nmask", f"thr-mask\nthr={THRESHOLD}", "thr-mask +\ncrf", "ground\ntruth"]
 
 # copied from critic-code, source and github link are listed in bachelor thesis
