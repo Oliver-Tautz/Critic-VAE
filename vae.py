@@ -155,12 +155,24 @@ elif args.evalsecond:
     critic = load_critic(CRITIC_PATH)
     load_vae_network(vae, second_vae=True)
     image_evaluate(vae, critic)
-elif args.train_crafter:
-    print('TRAINING on crafter dataset :)')
+
+
+
+
 else: # REGULAR VAE
     critic = load_critic(CRITIC_PATH)
 
     if args.train:
+        logger = Logger('./logs/vae' + str(time())[-5::])
+        dset = load_minerl_data(critic)
+        vae = train(vae, dset, logger=logger)
+
+        torch.save(vae.encoder.state_dict(), ENCODER_PATH)
+        torch.save(vae.decoder.state_dict(), DECODER_PATH)
+    elif args.train_crafter:
+        print("Training on crafter dataset :)")
+
+        critic = load_critic(CRAFTER_CRITIC_PATH)
         logger = Logger('./logs/vae' + str(time())[-5::])
         dset = load_minerl_data(critic)
         vae = train(vae, dset, logger=logger)

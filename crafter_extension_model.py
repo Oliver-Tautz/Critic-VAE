@@ -9,7 +9,7 @@ from crafter_extension_dataset import CrafterCriticDataset
 from torch.utils.data import DataLoader
 
 
-class NewCritic(nn.Module):
+class Critic(nn.Module):
 
     def __init__(self, width=64, dims=[8, 8, 8, 16], bottleneck=32, colorchs=3, chfak=1, activation=nn.ReLU, pool="max",
                  dropout=0.5):
