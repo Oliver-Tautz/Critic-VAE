@@ -49,8 +49,10 @@ def load_crafter_pictures(replay_dir, target_inventory_item='inventory_wood', do
 
 def collect_data(replay_dir='./dataset', target_inventory_item='inventory_wood', download=True, interpolate_to_float=False):
     # download and extract dataset
-    print(replay_dir)
+    from os import makedirs
+
     replay_dir = Path(os.path.expanduser(replay_dir))
+    makedirs(replay_dir,exist_ok=True)
 
     if download:
         print("Downloading raw replay dataset ...")
