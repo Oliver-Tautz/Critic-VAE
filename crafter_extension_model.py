@@ -161,10 +161,12 @@ class Critic(nn.Module):
         return history
 
     def evaluate(self, X, batchsize=None): # was called eval_intermediate
+        
+        
         device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
         self.to(device)
-        X.to(device)
+        X = torch.tensor(X).to(device)
 
         with torch.no_grad():
             # X = self.preprocess(X)
@@ -174,6 +176,7 @@ class Critic(nn.Module):
             else:
                 out = []
                 for batch in tqdm(DataLoader(X,batch_size=batchsize),desc='evaluate'):
+                    batch.to(device)
                     out.extend(self(batch))
                 return torch.vstack(out)
 
