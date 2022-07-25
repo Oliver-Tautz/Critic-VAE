@@ -160,9 +160,9 @@ elif args.evalsecond:
 
 
 else: # REGULAR VAE
-    critic = load_critic(CRITIC_PATH)
 
     if args.train:
+        critic = load_critic(CRITIC_PATH)
         logger = Logger('./logs/vae' + str(time())[-5::])
         dset = load_minerl_data(critic)
         vae = train(vae, dset, logger=logger)
@@ -179,6 +179,10 @@ else: # REGULAR VAE
 
         torch.save(vae.encoder.state_dict(), ENCODER_PATH)
         torch.save(vae.decoder.state_dict(), DECODER_PATH)
+
+        image_evaluate(vae, critic)
+
     else: # EVALUATE
+        critic = load_critic(CRITIC_PATH)
         load_vae_network(vae)
         image_evaluate(vae, critic)
