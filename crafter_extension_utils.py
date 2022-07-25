@@ -6,6 +6,7 @@ import os
 from tqdm import tqdm
 import pandas as pd
 import torch
+from  torch import nn
 
 def choose(X, no_choices, replace=True):
     choices = np.array(len(X))
@@ -22,13 +23,15 @@ def load_crafter_data(critic, recon_dset=False, vae=None,dataset_size=45000):
     pictures = load_crafter_pictures('dataset')
     pictures = torch.tensor(pictures).permute(0, 3, 1, 2) / 255
 
-    critic_values = critic.evaluate(pictures,100)
+    critic_values = nn.Sigmoid()(critic.evaluate(pictures,100))
     critic_values = critic_values.cpu()
 
+    print(critic_values)
 
     ix_low = np.where(critic_values <= 0.25)[0]
     ix_high = np.where(critic_values >= 0.7)[0]
     ix_med = np.where((critic_values > 0.25) & (critic_values < 0.7))[0]
+    print(len(ix_low),len(ix_med),len(ix_high))
 
     # get 1/3 per sample category
     low_samples_ix = np.random.choice(ix_low, int(dataset_size / 3))
