@@ -23,6 +23,7 @@ from vae_utility import *
 from tqdm import trange
 
 parser = argparse.ArgumentParser()
+parser.add_argument('-train-crafter', action='store_true') # train on crafter
 parser.add_argument('-train', action='store_true') # train
 parser.add_argument('-inject', action='store_true') # show recons of samples
 parser.add_argument('-dataset', action='store_true') # save recons as dataset
@@ -137,6 +138,7 @@ elif args.dataset:
     with open(SAVE_DATASET_PATH, 'wb') as file:
         pickle.dump(dset, file)
 elif args.second:
+    
     print('training second vae...')
     critic = load_critic(CRITIC_PATH)
 
@@ -153,6 +155,8 @@ elif args.evalsecond:
     critic = load_critic(CRITIC_PATH)
     load_vae_network(vae, second_vae=True)
     image_evaluate(vae, critic)
+elif args.train_crafter:
+    print('TRAINING on crafter dataset :)')
 else: # REGULAR VAE
     critic = load_critic(CRITIC_PATH)
 
