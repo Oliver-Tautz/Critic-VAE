@@ -47,7 +47,7 @@ def load_crafter_pictures(replay_dir, target_inventory_item='inventory_wood', do
     X, _ ,_ = collect_data(replay_dir, target_inventory_item, download, interpolate_to_float)
     return X
 
-def collect_data(replay_dir, target_inventory_item='inventory_wood', download=True, interpolate_to_float=False):
+def collect_data(replay_dir='./dataset', target_inventory_item='inventory_wood', download=True, interpolate_to_float=False):
     # download and extract dataset
     print(replay_dir)
     replay_dir = Path(os.path.expanduser(replay_dir))
