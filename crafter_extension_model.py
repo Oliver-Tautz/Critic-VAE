@@ -165,6 +165,7 @@ class Critic(nn.Module):
 
         self.to(device)
         X.to(device)
+
         with torch.no_grad():
             # X = self.preprocess(X)
 
