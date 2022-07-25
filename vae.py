@@ -24,6 +24,7 @@ from tqdm import trange
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-train-crafter', action='store_true') # train on crafter
+parser.add_argument('-train-crafter-real', action='store_true') # train on crafter
 parser.add_argument('-train', action='store_true') # train
 parser.add_argument('-inject', action='store_true') # show recons of samples
 parser.add_argument('-dataset', action='store_true') # save recons as dataset
@@ -169,10 +170,13 @@ else: # REGULAR VAE
 
         torch.save(vae.encoder.state_dict(), ENCODER_PATH)
         torch.save(vae.decoder.state_dict(), DECODER_PATH)
-    elif args.train_crafter:
+    elif args.train_crafter or args.train_crafter_real:
         print("Training on crafter dataset :)")
 
-        critic = load_critic(CRAFTER_CRITIC_PATH)
+        if args.train_crafter_real:
+            critic = load_critic(CRAFTER_CRITIC_PATH_REAL)
+        else:
+            critic = load_critic(CRAFTER_CRITIC_PATH)
         logger = Logger('./logs/vae' + str(time())[-5::])
         dset = load_minerl_data(critic)
         vae = train(vae, dset, logger=logger)
