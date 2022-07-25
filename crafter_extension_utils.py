@@ -23,7 +23,7 @@ def load_crafter_data(critic, recon_dset=False, vae=None,dataset_size=45000):
     pictures = torch.tensor(pictures).permute(0, 3, 1, 2) / 255
 
     critic_values = critic.evaluate(pictures,100)
-    critic_values.cpu()
+    critic_values = critic_values.cpu()
 
 
     ix_low = np.where(critic_values <= 0.25)[0]
