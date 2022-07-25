@@ -9,7 +9,7 @@ class CrafterCriticDataset(Dataset):
 
     def __init__(self, X, Y, oversample=False, dataset_size=50000, interpolate_real=False):
         if not interpolate_real:
-            Y = torch.tensor[Y]
+            Y = torch.tensor(Y)
             if oversample:
                 X_positive = X[Y == 1]
                 X_negative = X[Y == 0]
