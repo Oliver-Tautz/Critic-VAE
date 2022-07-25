@@ -177,6 +177,7 @@ class Critic(nn.Module):
                 out = []
                 for batch in tqdm(DataLoader(X,batch_size=batchsize),desc='evaluate'):
                     batch.to(device)
-                    out.extend(self(batch))
+                    out.append(self(batch))
+                print(torch.vstack(out).shape)
                 return torch.vstack(out)
 
