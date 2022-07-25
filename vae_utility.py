@@ -11,6 +11,7 @@ from PIL import Image, ImageDraw, ImageFont
 from collections import defaultdict
 import denseCRF
 
+
 from vae_parameters import *
 from vae_nets import *
 
@@ -361,9 +362,14 @@ def load_vae_network(vae, second_vae=False):
     vae.encoder.eval()
     vae.decoder.eval()
 
-def load_critic(path):
-    from critic_net import Critic
-    critic = Critic()
+def load_critic(path,crafter=False):
+    if crafter:
+        from crafter_extension_model import Critic
+        critic = Critic()
+    else:
+        from critic_net import Critic
+        critic = Critic()
+
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     critic.load_state_dict(torch.load(path,map_location=device))
     critic.eval()

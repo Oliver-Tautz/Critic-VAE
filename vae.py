@@ -176,9 +176,9 @@ else: # REGULAR VAE
         print("Training on crafter dataset :)")
 
         if args.train_crafter_real:
-            critic = load_critic(CRAFTER_CRITIC_PATH_REAL)
+            critic = load_critic(CRAFTER_CRITIC_PATH_REAL,crafter=True)
         else:
-            critic = load_critic(CRAFTER_CRITIC_PATH)
+            critic = load_critic(CRAFTER_CRITIC_PATH,crafter=True)
         logger = Logger('./logs/vae' + str(time())[-5::])
         dset = load_crafter_data(critic)
         vae = train(vae, dset, logger=logger)
