@@ -72,7 +72,7 @@ class NewCritic(nn.Module):
             return pred
 
     def fit_on_crafter(self, X, Y, batch_size=32, epochs=2, dataset_size=50000, lossF=torch.nn.BCEWithLogitsLoss(),
-                       optimizer=None, real=False):
+                       optimizer=None, real=False, oversample=True):
         # X = torch.tensor of shape (N,3, 64, 64)
         # Y = torch.tensor of shape (N)
 
@@ -85,11 +85,11 @@ class NewCritic(nn.Module):
             train_x, eval_x, train_y, eval_y = train_test_split(X, Y, train_size=0.8, random_state=123456)
 
         if real:
-            train_dataset = CrafterCriticDataset(train_x, train_y, oversample=True, dataset_size=dataset_size,
+            train_dataset = CrafterCriticDataset(train_x, train_y, oversample=oversample, dataset_size=dataset_size,
                                                  interpolate_real=True)
             eval_dataset = CrafterCriticDataset(eval_x, eval_y, interpolate_real=True)
         else:
-            train_dataset = CrafterCriticDataset(train_x, train_y, oversample=True, dataset_size=dataset_size)
+            train_dataset = CrafterCriticDataset(train_x, train_y, oversample=oversample, dataset_size=dataset_size)
             eval_dataset = CrafterCriticDataset(eval_x, eval_y)
 
         del train_x, eval_x, train_y, eval_y
