@@ -159,3 +159,18 @@ class Critic(nn.Module):
             history["val_acc"].append(eval_metric.compute())
             history['val_loss'].append(np.mean(batchloss_eval))
         return history
+
+    def evaluate(self, X, batchsize=None): # was called eval_intermediate
+
+
+        with torch.no_grad():
+            # X = self.preprocess(X)
+
+            if not batchsize:
+                return self.forward(X, collect=False)
+            else:
+                out = []
+                for batch in tqdm(DataLoader(X,batch_size=batchsize),desc='evaluate'):
+                    out.extend(self(batch))
+                return torch.vstack(out)
+

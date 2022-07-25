@@ -6,22 +6,39 @@ import multiprocessing
 import pandas as pd
 import matplotlib.pyplot as plt
 from torch import nn
+from vae_parameters import *
+from crafter_extension_utils import load_crafter_pictures
+import numpy as np
+
 ncpu = multiprocessing.cpu_count()
 
 torch.set_num_threads(ncpu)
 torch.set_num_interop_threads(ncpu)
 
-replay_dir = Path('/home/olli/gits/Critic-VAE/dataset')
-X,Y,_ = collect_data(replay_dir,download=False,interpolate_to_float=False)
 
-X = torch.tensor(X).permute(0,3,1,2) / 255
-
-
+dataset_size=5000
 
 
 critic = Critic()
-history = critic.fit_on_crafter(X,Y,batch_size = 32,epochs=30,dataset_size=30000,real=True,lossF=nn.MSELoss(),oversample=False)
-history['train_acc'] = [a['accuracy'] for a in history['train_acc']]
-history['val_acc'] = [a['accuracy'] for a in history['val_acc']]
-pd.DataFrame(history)[['train_loss','val_loss']].plot()
-plt.show()
+critic.load_state_dict(torch.load(CRAFTER_CRITIC_PATH,map_location=torch.device('cpu')))
+
+pictures = load_crafter_pictures('dataset')
+pictures = torch.tensor(pictures).permute(0,3,1,2) / 255
+
+Y = critic.evaluate(pictures,100)
+
+ix_low = np.where(Y <= 0.25)[0]
+ix_high = np.where(Y >= 0.7)[0]
+ix_med = np.where((Y > 0.25) & (Y < 0.7))[0]
+
+# get 1/3 per sample category
+low_samples_ix = np.random.choice(ix_low, int(dataset_size / 3))
+med_samples_ix = np.random.choice(ix_med, int(dataset_size / 3))
+high_samples_ix = np.random.choice(ix_high, int(dataset_size / 3))
+
+print(len(ix_low),len(ix_high),len(ix_med))
+
+samples_ix = np.concatenate((low_samples_ix, med_samples_ix, high_samples_ix))
+
+print(samples_ix)
+

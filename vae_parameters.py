@@ -36,8 +36,8 @@ SECOND_ENCODER_PATH = 'vae2_encoder.pt'
 SECOND_DECODER_PATH = 'vae2_decoder.pt'
 
 CRITIC_PATH = 'saved-networks/critic-rewidx=1-cepochs=15-datamode=trunk-datasize=99999-shift=12-chfak=1-dropout=0.3.pt'
-CRAFTER_CRITIC_PATH_REAL = f"/content/drive/MyDrive/crafter_models/critic-batch_size={32}-dataset_size={45000}-epochs={50}_real/critic.pt"
-CRAFTER_CRITIC_PATH = f"/content/drive/MyDrive/crafter_models/critic-batch_size={32}-dataset_size={45000}-epochs={50}/critic.pt"
+CRAFTER_CRITIC_PATH_REAL = "crafter_models/crafter_models/critic-batch_size=32-dataset_size=45000-epochs=50_real/critic.pt"
+CRAFTER_CRITIC_PATH = "crafter_models/crafter_models/critic-batch_size=32-dataset_size=45000-epochs=50/critic.pt"
 SECOND_CRITIC_PATH = 'saved-networks/critic-rewidx=1-cepochs=15-datamode=trunk-datasize=100000-shift=12-chfak=1-dropout=0.3.pt'
 
 MINERL_DATA_ROOT_PATH = '/homes/lcicek/anaconda3/envs/vae/lib/python3.6/site-packages/minerl'

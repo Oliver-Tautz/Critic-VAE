@@ -5,7 +5,7 @@ import zipfile
 import os
 from tqdm import tqdm
 import pandas as pd
-
+import torch
 
 def choose(X, no_choices, replace=True):
     choices = np.array(len(X))
@@ -13,6 +13,35 @@ def choose(X, no_choices, replace=True):
     choices = np.random.choice(choices, no_choices)
     return X[choices]
 
+
+def load_crafter_data(critic, recon_dset=False, vae=None,dataset_size=45000):
+    print("loading minerl-data...")
+
+    ### Initialize mineRL dataset ###
+    # os.environ['MINERL_DATA_ROOT'] = MINERL_DATA_ROOT_PATH
+    pictures = load_crafter_pictures('dataset')
+    pictures = torch.tensor(pictures).permute(0, 3, 1, 2) / 255
+
+    critic_values = critic.evaluate(pictures,100)
+
+    critic_values = critic.evaluate(pictures, 100)
+
+    ix_low = np.where(critic_values <= 0.25)[0]
+    ix_high = np.where(critic_values >= 0.7)[0]
+    ix_med = np.where((critic_values > 0.25) & (critic_values < 0.7))[0]
+
+    # get 1/3 per sample category
+    low_samples_ix = np.random.choice(ix_low, int(dataset_size / 3))
+    med_samples_ix = np.random.choice(ix_med, int(dataset_size / 3))
+    high_samples_ix = np.random.choice(ix_high, int(dataset_size / 3))
+
+
+    samples_ix = np.concatenate((low_samples_ix, med_samples_ix, high_samples_ix))
+
+    dset=pictures[samples_ix]
+
+
+    return dset
 
 def load_crafter_pictures(replay_dir, target_inventory_item='inventory_wood', download=True, interpolate_to_float=False):
     X, _ ,_ = collect_data(replay_dir, target_inventory_item, download, interpolate_to_float)

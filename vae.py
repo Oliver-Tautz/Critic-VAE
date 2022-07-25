@@ -21,6 +21,8 @@ from vae_nets import *
 from vae_utility import *
 
 from tqdm import trange
+from crafter_extension_utils import load_crafter_data
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-train-crafter', action='store_true') # train on crafter
@@ -178,7 +180,7 @@ else: # REGULAR VAE
         else:
             critic = load_critic(CRAFTER_CRITIC_PATH)
         logger = Logger('./logs/vae' + str(time())[-5::])
-        dset = load_minerl_data(critic)
+        dset = load_crafter_data(critic)
         vae = train(vae, dset, logger=logger)
 
         torch.save(vae.encoder.state_dict(), ENCODER_PATH)

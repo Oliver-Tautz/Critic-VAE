@@ -364,7 +364,8 @@ def load_vae_network(vae, second_vae=False):
 def load_critic(path):
     from critic_net import Critic
     critic = Critic()
-    critic.load_state_dict(torch.load(path))
+    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+    critic.load_state_dict(torch.load(path,map_location=device))
     critic.eval()
     critic.to(device)
 
