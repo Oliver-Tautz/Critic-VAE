@@ -166,7 +166,7 @@ class Critic(nn.Module):
         device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
         self.to(device)
-        X = torch.tensor(X).to(device)
+        X = X.to(device)
 
         with torch.no_grad():
             # X = self.preprocess(X)

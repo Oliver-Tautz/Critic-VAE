@@ -7,12 +7,58 @@ from tqdm import tqdm
 import pandas as pd
 import torch
 from  torch import nn
+from vae_parameters import *
+from PIL import Image
+from torch import Tensor, t
+import statistics
+from vae_utility import adjust_values, get_injected_img, get_diff_image, prepare_diff,get_final_frame
 
 def choose(X, no_choices, replace=True):
     choices = np.array(len(X))
 
-    choices = np.random.choice(choices, no_choices)
+    choices = np.random.choice(choices, no_choices,replace=replace)
     return X[choices]
+
+
+def crafter_image_evaluate(autoencoder, critic,inject=False):
+    print('evaluating source images...')
+
+    crafter_povs = load_crafter_pictures('dataset',download=False)
+
+
+    imgs = []
+
+
+    diff_max_values = []
+    for i, crafter_pov in tqdm(enumerate(crafter_povs),desc='evaluate_dataset',total=len(crafter_povs)):
+        ### LOAD IMAGES AND PREPROCESS ###
+        orig_img = crafter_pov
+        img_array = adjust_values(orig_img)
+        img_array = img_array.transpose(2, 0, 1)  # HWC to CHW for critic
+        img_array = img_array[np.newaxis, ...]  # add batch_size = 1 to make it BCHW
+        img_tensor = Tensor(img_array).to(device)
+
+        pred = critic.evaluate(img_tensor)
+
+        if inject:
+            img = get_injected_img(autoencoder, img_tensor, pred[0])
+            img.save(f'{INJECT_PATH}image-{i:03d}.png', format="png")
+        else:
+            ro, rz, diff, max_value = get_diff_image(autoencoder, img_tensor, pred[0])
+            imgs.append([img_tensor, ro, rz, diff, pred[0]])
+            diff_max_values.append(max_value)
+
+    if not inject:
+        mean_max = statistics.mean(diff_max_values)
+        diff_factor = 1 / mean_max if mean_max != 0 else 0
+
+        for i, img in enumerate(imgs):
+            diff_img = prepare_diff(img[3], diff_factor, mean_max)
+            diff_img = (diff_img * 255).astype(np.uint8)
+            diff_img = Image.fromarray(diff_img)
+            save_img = get_final_frame(img[0], img[1], img[2], diff_img, img[4])
+
+            save_img.save(f'{SAVE_PATH}/image-{i:03d}.png', format="png")
 
 
 def load_crafter_data(critic, recon_dset=False, vae=None,dataset_size=45000):

@@ -21,12 +21,13 @@ from vae_nets import *
 from vae_utility import *
 
 from tqdm import trange
-from crafter_extension_utils import load_crafter_data
+from crafter_extension_utils import load_crafter_data, crafter_image_evaluate
 
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-train-crafter', action='store_true') # train on crafter
 parser.add_argument('-train-crafter-real', action='store_true') # train on crafter
+parser.add_argument('-eval-crafter', action='store_true') # train on crafter
 parser.add_argument('-train', action='store_true') # train
 parser.add_argument('-inject', action='store_true') # show recons of samples
 parser.add_argument('-dataset', action='store_true') # save recons as dataset
@@ -186,7 +187,12 @@ else: # REGULAR VAE
         torch.save(vae.encoder.state_dict(), ENCODER_PATH)
         torch.save(vae.decoder.state_dict(), DECODER_PATH)
 
-        image_evaluate(vae, critic)
+    elif args.eval_crafter:
+        critic = load_critic(CRAFTER_CRITIC_PATH,crafter=True)
+        load_vae_network(vae,second_vae=False)
+        crafter_image_evaluate(vae,critic,args.inject)
+
+
 
     else: # EVALUATE
         critic = load_critic(CRITIC_PATH)
