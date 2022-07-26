@@ -3,7 +3,7 @@ from pathlib import Path
 import wget
 import zipfile
 import os
-from tqdm import tqdm
+from tqdm import tqdm, trange
 import pandas as pd
 import torch
 from  torch import nn
@@ -11,7 +11,61 @@ from vae_parameters import *
 from PIL import Image
 from torch import Tensor, t
 import statistics
-from vae_utility import adjust_values, get_injected_img, get_diff_image, prepare_diff,get_final_frame
+from vae_utility import adjust_values, get_injected_img, get_diff_image, prepare_diff,get_final_frame,log_info
+
+
+import multiprocessing
+ncpu = multiprocessing.cpu_count()
+import torch
+import os
+
+
+torch.set_num_threads(ncpu)
+torch.set_num_interop_threads(ncpu)
+
+
+def train_on_crafter(autoencoder,critic, dset, logger=None,remove_inv_for_vae=True):
+    #frames, gt_frames = load_textured_minerl()
+    dset = np.stack(dset).squeeze()
+    opt = torch.optim.Adam(autoencoder.parameters(), lr=lr)
+    num_samples = dset.shape[0]
+
+    # Start training
+    for ep in trange(epochs, desc='train_epochs'):  # change
+        epoch_indices = np.arange(num_samples)
+        np.random.shuffle(epoch_indices)
+
+        for batch_i in trange(0, num_samples, batch_size, desc='train_batches'):
+            # NOTE: this will cut off incomplete batches from end of the random indices
+            batch_indices = epoch_indices[batch_i:batch_i + batch_size]
+            images = dset[batch_indices]
+            images = Tensor(images).to(device)
+
+
+            preds = critic.evaluate(images)
+            opt.zero_grad()
+
+
+            # zero inventory for vae
+            if remove_inv_for_vae:
+                images[:,:,49:,] = 0
+
+
+            out = autoencoder(images, preds)
+
+            losses = autoencoder.vae_loss(out[0], out[1], out[2], out[3])
+            loss = losses['total_loss']
+            loss.backward()
+            opt.step()
+
+            if batch_i % log_n == 0:
+                print(f'    ep:{ep}, imgs:{num_samples * ep + (batch_i + 1)}', end='\r')
+
+                if logger is not None:
+                    log_info(losses, logger, batch_i, ep, num_samples)
+
+    return autoencoder
+
 
 def choose(X, no_choices, replace=True):
     choices = np.array(len(X))
@@ -20,17 +74,28 @@ def choose(X, no_choices, replace=True):
     return X[choices]
 
 
-def crafter_image_evaluate(autoencoder, critic,inject=False):
+def crafter_image_evaluate(autoencoder, critic,inject=False,no_samples=10000,remove_inv_for_vae=True):
+    """
+    Batch processing could really speed this up i think :O
+
+    :param autoencoder:
+    :param critic:
+    :param inject:
+    :return:
+    """
+
     print('evaluating source images...')
 
     crafter_povs = load_crafter_pictures('dataset',download=False)
 
+    if no_samples:
+        crafter_povs = choose(crafter_povs,no_choices=no_samples,replace=False)
 
     imgs = []
 
 
     diff_max_values = []
-    for i, crafter_pov in tqdm(enumerate(crafter_povs),desc='evaluate_dataset',total=len(crafter_povs)):
+    for i, crafter_pov in tqdm(enumerate(crafter_povs),desc='evaluate_dataset_step1',total=len(crafter_povs)):
         ### LOAD IMAGES AND PREPROCESS ###
         orig_img = crafter_pov
         img_array = adjust_values(orig_img)
@@ -39,9 +104,12 @@ def crafter_image_evaluate(autoencoder, critic,inject=False):
         img_tensor = Tensor(img_array).to(device)
 
         pred = critic.evaluate(img_tensor)
+        if remove_inv_for_vae:
+            img_tensor[:,:,49:,] = 0
 
         if inject:
             img = get_injected_img(autoencoder, img_tensor, pred[0])
+            os.makedirs(INJECT_PATH,exist_ok=True)
             img.save(f'{INJECT_PATH}image-{i:03d}.png', format="png")
         else:
             ro, rz, diff, max_value = get_diff_image(autoencoder, img_tensor, pred[0])
@@ -52,12 +120,12 @@ def crafter_image_evaluate(autoencoder, critic,inject=False):
         mean_max = statistics.mean(diff_max_values)
         diff_factor = 1 / mean_max if mean_max != 0 else 0
 
-        for i, img in enumerate(imgs):
+        for i, img in tqdm(enumerate(imgs),desc='evaluate_dataset_step2',total=len(imgs)):
             diff_img = prepare_diff(img[3], diff_factor, mean_max)
             diff_img = (diff_img * 255).astype(np.uint8)
             diff_img = Image.fromarray(diff_img)
             save_img = get_final_frame(img[0], img[1], img[2], diff_img, img[4])
-
+            os.makedirs(SAVE_PATH,exist_ok=True)
             save_img.save(f'{SAVE_PATH}/image-{i:03d}.png', format="png")
 
 

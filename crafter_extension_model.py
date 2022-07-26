@@ -178,6 +178,6 @@ class Critic(nn.Module):
                 for batch in tqdm(DataLoader(X,batch_size=batchsize),desc='evaluate'):
                     batch.to(device)
                     out.append(self(batch))
-                print(torch.vstack(out).shape)
+
                 return torch.vstack(out)
 
