@@ -75,7 +75,9 @@ I suspect the model to just learn the inventory position of the logs ... a trivi
 
 With the same critic model and the same dataset, the VAE is trained again, setting all inventory pixels to (0,0,0), only for the vae. 
 
-The [results](https://drive.google.com/drive/folders/1k2nV2d1dHhlAZUzOWg2r4mOPuYnjA8b0?usp=sharing) don't seem to be useful. There are multiple things to try:
+The [results](https://drive.google.com/drive/folders/1k2nV2d1dHhlAZUzOWg2r4mOPuYnjA8b0?usp=sharing) **don't seem to be useful.**
+
+### There are multiple things to try:
 
 * investigate VAE loss curves and training data
     * does VAE learn without inventory?!
