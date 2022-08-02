@@ -188,6 +188,7 @@ else: # REGULAR VAE
 
         torch.save(vae.encoder.state_dict(), ENCODER_PATH)
         torch.save(vae.decoder.state_dict(), DECODER_PATH)
+        crafter_image_evaluate(vae,critic,args.inject)
 
     elif args.eval_crafter:
         critic = load_critic(CRAFTER_CRITIC_PATH,crafter=True)
