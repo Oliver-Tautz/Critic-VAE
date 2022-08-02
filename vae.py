@@ -22,7 +22,7 @@ from vae_utility import *
 
 from tqdm import trange
 from crafter_extension_utils import load_crafter_data, crafter_image_evaluate, train_on_crafter
-
+from crafter_extrension_vae import CrafterVariationalAutoencoder
 parser = argparse.ArgumentParser()
 parser.add_argument('-train-crafter', action='store_true') # train on crafter
 parser.add_argument('-train-crafter-real', action='store_true') # train on crafter
@@ -115,7 +115,7 @@ def image_evaluate(autoencoder, critic):
     
 
 vae = VariationalAutoencoder().to(device) # GPU
-print(vae)
+
 
 if args.video:
     # get images from regular vae
@@ -176,6 +176,7 @@ else: # REGULAR VAE
 
     elif args.train_crafter or args.train_crafter_real:
         print("Training on crafter dataset :)")
+        vae = CrafterVariationalAutoencoder().to(device)
 
         if args.train_crafter_real:
             critic = load_critic(CRAFTER_CRITIC_PATH_REAL,crafter=True)
@@ -190,6 +191,7 @@ else: # REGULAR VAE
 
     elif args.eval_crafter:
         critic = load_critic(CRAFTER_CRITIC_PATH,crafter=True)
+        vae = CrafterVariationalAutoencoder().to(device)
         load_vae_network(vae,second_vae=False)
         crafter_image_evaluate(vae,critic,args.inject)
 

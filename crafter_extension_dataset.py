@@ -7,7 +7,7 @@ import numpy as np
 
 class CrafterCriticDataset(Dataset):
 
-    def __init__(self, X, Y, oversample=False, dataset_size=50000, interpolate_real=False):
+    def __init__(self, X, Y, oversample=False, dataset_size=50000, interpolate_real=False,real_windowsize=5):
         if not interpolate_real:
             Y = torch.tensor(Y)
             if oversample:
@@ -33,7 +33,7 @@ class CrafterCriticDataset(Dataset):
         else:
             if oversample:
                 # get interpolated reward
-                self.Y = interpolate_simple(Y)
+                self.Y = interpolate_simple(Y,windowsize=real_windowsize)
                 self.Y=torch.tensor(Y)
 
                 # get indices by reward value

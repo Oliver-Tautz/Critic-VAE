@@ -1,6 +1,6 @@
 from crafter_extension_utils import collect_data
 from pathlib import Path
-from crafter_extension_model import Critic
+from crafter_extension_critic_model import Critic
 import torch
 import multiprocessing
 import pandas as pd

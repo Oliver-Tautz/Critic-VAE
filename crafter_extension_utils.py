@@ -31,7 +31,7 @@ def remove_inventory(povs):
 
 def train_on_crafter(autoencoder,critic, dset, logger=None):
     #frames, gt_frames = load_textured_minerl()
-    dset = np.stack(dset).squeeze()
+    dset = np.stack(dset).squeeze()[:CRAFTER_DATASET_SIZE]
     opt = torch.optim.Adam(autoencoder.parameters(), lr=lr)
     num_samples = dset.shape[0]
 
@@ -229,7 +229,7 @@ def collect_data(replay_dir='./dataset', target_inventory_item='inventory_wood',
 
     return np.array(Xs), Ys.astype(float), np.array(Is)
 
-def interpolate_simple(Y_,windowsize=50):
+def interpolate_simple(Y_,windowsize=5):
     i=0
 
 

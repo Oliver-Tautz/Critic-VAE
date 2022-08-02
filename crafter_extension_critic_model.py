@@ -86,8 +86,8 @@ class Critic(nn.Module):
 
         if real:
             train_dataset = CrafterCriticDataset(train_x, train_y, oversample=oversample, dataset_size=dataset_size,
-                                                 interpolate_real=True)
-            eval_dataset = CrafterCriticDataset(eval_x, eval_y, interpolate_real=True)
+                                                 interpolate_real=True,real_windowsize=5)
+            eval_dataset = CrafterCriticDataset(eval_x, eval_y, interpolate_real=True,real_windowsize=5)
         else:
             train_dataset = CrafterCriticDataset(train_x, train_y, oversample=oversample, dataset_size=dataset_size)
             eval_dataset = CrafterCriticDataset(eval_x, eval_y)

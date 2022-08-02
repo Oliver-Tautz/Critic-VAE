@@ -364,7 +364,7 @@ def load_vae_network(vae, second_vae=False):
 
 def load_critic(path,crafter=False):
     if crafter:
-        from crafter_extension_model import Critic
+        from crafter_extension_critic_model import Critic
         critic = Critic()
     else:
         from critic_net import Critic
