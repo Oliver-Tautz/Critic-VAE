@@ -23,8 +23,13 @@ import os
 torch.set_num_threads(ncpu)
 torch.set_num_interop_threads(ncpu)
 
+def remove_inventory(povs):
+    "remove rows 49-64 (inventory)"
+    povs[:, :, 49:, ] = 0
+    return povs
 
-def train_on_crafter(autoencoder,critic, dset, logger=None,remove_inv_for_vae=True):
+
+def train_on_crafter(autoencoder,critic, dset, logger=None):
     #frames, gt_frames = load_textured_minerl()
     dset = np.stack(dset).squeeze()
     opt = torch.optim.Adam(autoencoder.parameters(), lr=lr)
@@ -41,14 +46,14 @@ def train_on_crafter(autoencoder,critic, dset, logger=None,remove_inv_for_vae=Tr
             images = dset[batch_indices]
             images = Tensor(images).to(device)
 
+            # zero inventory
+            images = remove_inventory(images)
+
 
             preds = critic.evaluate(images)
             opt.zero_grad()
 
 
-            # zero inventory for vae
-            if remove_inv_for_vae:
-                images[:,:,49:,] = 0
 
 
             out = autoencoder(images, preds)

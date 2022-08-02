@@ -115,6 +115,7 @@ def image_evaluate(autoencoder, critic):
     
 
 vae = VariationalAutoencoder().to(device) # GPU
+print(vae)
 
 if args.video:
     # get images from regular vae
