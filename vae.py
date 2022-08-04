@@ -28,6 +28,7 @@ parser.add_argument('-train-crafter', action='store_true') # train on crafter
 parser.add_argument('-train-crafter-real', action='store_true') # train on crafter
 parser.add_argument('-eval-crafter', action='store_true') # train on crafter
 parser.add_argument('-train', action='store_true') # train
+parser.add_argument('-crafter-windowsize',type=int,default=None)
 parser.add_argument('-inject', action='store_true') # show recons of samples
 parser.add_argument('-dataset', action='store_true') # save recons as dataset
 parser.add_argument('-second', action='store_true') # train second VAE
@@ -183,7 +184,9 @@ else: # REGULAR VAE
         else:
             critic = load_critic(CRAFTER_CRITIC_PATH,crafter=True)
         logger = Logger('./logs/vae' + str(time())[-5::])
-        dset = load_crafter_data(critic)
+        print(args.crafter_windowsize)
+        dset = load_crafter_data(critic,windowsize = args.crafter_windowsize)
+        print(len(dset))
         vae = train_on_crafter(vae, critic,dset, logger=logger)
 
         torch.save(vae.encoder.state_dict(), ENCODER_PATH)
@@ -191,6 +194,7 @@ else: # REGULAR VAE
         crafter_image_evaluate(vae,critic,args.inject)
 
     elif args.eval_crafter:
+
         critic = load_critic(CRAFTER_CRITIC_PATH,crafter=True)
         vae = CrafterVariationalAutoencoder().to(device)
         load_vae_network(vae,second_vae=False)
@@ -201,4 +205,5 @@ else: # REGULAR VAE
     else: # EVALUATE
         critic = load_critic(CRITIC_PATH)
         load_vae_network(vae)
+
         image_evaluate(vae, critic)

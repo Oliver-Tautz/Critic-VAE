@@ -6,14 +6,14 @@ w = 64 # original image width
 ch = 3 # image channels
 
 ### TRAINING DATA ###
-epochs = 7
+epochs = 5
 batch_size = 128
 lr = 0.00005
 k = 5 # kernel size
 p = 2 # padding
 step = 1
 bottleneck = 4096 # 4x4x256; bottleneck of convolutional layers
-latent_dim = 64 # fully-connected layer, from 4096 to 64 dim
+latent_dim = 256 # fully-connected layer, from 4096 to 64 dim
 kld_weight = 0.001 # note: https://github.com/AntixK/PyTorch-VAE/issues/11 OR https://github.com/AntixK/PyTorch-VAE/issues/35
 
 total_images = 50000
@@ -43,5 +43,5 @@ SECOND_CRITIC_PATH = 'saved-networks/critic-rewidx=1-cepochs=15-datamode=trunk-d
 MINERL_DATA_ROOT_PATH = '/homes/lcicek/anaconda3/envs/vae/lib/python3.6/site-packages/minerl'
 
 
-CRAFTER_DATASET_SIZE=10000
-CRAFTER_BOTTLENECK = 8*8*256
+CRAFTER_DATASET_SIZE=40000
+CRAFTER_BOTTLENECK = 4**2*256

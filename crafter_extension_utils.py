@@ -12,7 +12,9 @@ from PIL import Image
 from torch import Tensor, t
 import statistics
 from vae_utility import adjust_values, get_injected_img, get_diff_image, prepare_diff,get_final_frame,log_info
-
+from os.path import exists
+from collections import OrderedDict
+from os import makedirs
 
 import multiprocessing
 ncpu = multiprocessing.cpu_count()
@@ -32,13 +34,22 @@ def remove_inventory(povs):
 def train_on_crafter(autoencoder,critic, dset, logger=None):
     #frames, gt_frames = load_textured_minerl()
     dset = np.stack(dset).squeeze()[:CRAFTER_DATASET_SIZE]
-    opt = torch.optim.Adam(autoencoder.parameters(), lr=lr)
+    opt = torch.optim.AdamW(autoencoder.parameters())
     num_samples = dset.shape[0]
 
     # Start training
+
+    training_data = {'total_loss':[],
+                     'recon_loss':[],
+                     'KLD':[]}
+
     for ep in trange(epochs, desc='train_epochs'):  # change
         epoch_indices = np.arange(num_samples)
         np.random.shuffle(epoch_indices)
+
+        epoch_data = {'total_loss':[],
+                     'recon_loss':[],
+                     'KLD':[]}
 
         for batch_i in trange(0, num_samples, batch_size, desc='train_batches'):
             # NOTE: this will cut off incomplete batches from end of the random indices
@@ -59,15 +70,27 @@ def train_on_crafter(autoencoder,critic, dset, logger=None):
             out = autoencoder(images, preds)
 
             losses = autoencoder.vae_loss(out[0], out[1], out[2], out[3])
+
+            epoch_data['total_loss'].append(losses['total_loss'].detach())
+            epoch_data['recon_loss'].append(losses['recon_loss'].detach())
+            epoch_data['KLD'].append(losses['KLD'].detach())
+
             loss = losses['total_loss']
             loss.backward()
             opt.step()
+
 
             if batch_i % log_n == 0:
                 print(f'    ep:{ep}, imgs:{num_samples * ep + (batch_i + 1)}', end='\r')
 
                 if logger is not None:
                     log_info(losses, logger, batch_i, ep, num_samples)
+
+        training_data['total_loss'].append(np.mean(epoch_data['total_loss']))
+        training_data['recon_loss'].append(np.mean(epoch_data['recon_loss']))
+        training_data['KLD'].append(np.mean(epoch_data['KLD']))
+        pd.DataFrame(training_data).to_csv('log.csv')
+
 
     return autoencoder
 
@@ -79,7 +102,7 @@ def choose(X, no_choices, replace=True):
     return X[choices]
 
 
-def crafter_image_evaluate(autoencoder, critic,inject=False,no_samples=10000,remove_inv_for_vae=True):
+def crafter_image_evaluate(autoencoder, critic,inject=False,no_samples=10000,remove_inv_for_vae=True,windowsize=None):
     """
     Batch processing could really speed this up i think :O
 
@@ -91,7 +114,7 @@ def crafter_image_evaluate(autoencoder, critic,inject=False,no_samples=10000,rem
 
     print('evaluating source images...')
 
-    crafter_povs = load_crafter_pictures('dataset',download=False)
+    crafter_povs = load_crafter_pictures('dataset',download=False,windowsize=windowsize)
 
     if no_samples:
         crafter_povs = choose(crafter_povs,no_choices=no_samples,replace=False)
@@ -134,12 +157,13 @@ def crafter_image_evaluate(autoencoder, critic,inject=False,no_samples=10000,rem
             save_img.save(f'{SAVE_PATH}/image-{i:03d}.png', format="png")
 
 
-def load_crafter_data(critic, recon_dset=False, vae=None,dataset_size=45000):
+def load_crafter_data(critic, recon_dset=False, vae=None,dataset_size=45000,windowsize=None):
     print("loading minerl-data...")
 
     ### Initialize mineRL dataset ###
     # os.environ['MINERL_DATA_ROOT'] = MINERL_DATA_ROOT_PATH
-    pictures = load_crafter_pictures('dataset')
+    pictures = load_crafter_pictures('dataset',windowsize=windowsize)
+
     pictures = torch.tensor(pictures).permute(0, 3, 1, 2) / 255
 
     critic_values = nn.Sigmoid()(critic.evaluate(pictures,100))
@@ -165,32 +189,43 @@ def load_crafter_data(critic, recon_dset=False, vae=None,dataset_size=45000):
 
     return dset
 
-def load_crafter_pictures(replay_dir, target_inventory_item='inventory_wood', download=True, interpolate_to_float=False):
-    X, _ ,_ = collect_data(replay_dir, target_inventory_item, download, interpolate_to_float)
+def load_crafter_pictures(replay_dir, target_inventory_item='inventory_wood', download=True, interpolate_to_float=False,windowsize=None):
+    X, _ ,_ = collect_data(replay_dir, target_inventory_item, download, interpolate_to_float,windowsize)
     return X
 
-def collect_data(replay_dir='./dataset', target_inventory_item='inventory_wood', download=True, interpolate_to_float=False):
+def collect_data(replay_dir='./dataset', target_inventory_item='inventory_wood', download=True, interpolate_to_float=False,windowsize=None):
     # download and extract dataset
     from os import makedirs
 
     replay_dir = Path(os.path.expanduser(replay_dir))
     makedirs(replay_dir,exist_ok=True)
 
+    dataset_folder = 'dataset'
+    if windowsize:
+        dataset_folder += f"_windowsize={windowsize}"
+
     if download:
-        print("Downloading raw replay dataset ...")
-        human_replay_dataset_url = "https://archive.org/download/crafter_human_dataset/dataset.zip"
-        print('downloaded ', wget.download(human_replay_dataset_url, out=str((replay_dir / 'dataset.zip').resolve())))
-        print("\nUnzipping ...")
-        with zipfile.ZipFile(replay_dir / 'dataset.zip', 'r') as zip_ref:
-            zip_ref.extractall(replay_dir)
-        os.remove(replay_dir / 'dataset.zip')
+        if not exists(replay_dir / dataset_folder/ '1CKFwmfLeb5MzlgFRaIF7M.npz') :
+            print("Downloading raw replay dataset ...")
+            human_replay_dataset_url = "https://archive.org/download/crafter_human_dataset/dataset.zip"
+            print('downloaded ', wget.download(human_replay_dataset_url, out=str((replay_dir / 'dataset.zip').resolve())))
+            print("\nUnzipping ...")
+            with zipfile.ZipFile(replay_dir / 'dataset.zip', 'r') as zip_ref:
+                zip_ref.extractall(replay_dir)
+            os.remove(replay_dir / 'dataset.zip')
+
+            if windowsize:
+                save_dataset_with_windowsize(replay_dir,windowsize)
+
+        else:
+            print('Dataset already downloaded :)')
 
     # convert to dictionaries
     replay_list = []
 
-    for replay_name in os.listdir(replay_dir / 'dataset'):
+    for replay_name in os.listdir(replay_dir / dataset_folder):
         if replay_name.endswith('.npz'):
-            replay = np.load(replay_dir / 'dataset' / replay_name, allow_pickle=True)
+            replay = np.load(replay_dir / dataset_folder / replay_name, allow_pickle=True)
             # replay.keys()
             replay_dict = dict()
             # for key in replay.keys():
@@ -275,3 +310,41 @@ def get_df(replay_dict,col_list = ['image', 'action', 'reward', 'done', 'discoun
 
 def linear_interpolate(l):
     return [(1*i/l) for i in range((l+1))][1:]
+
+
+def save_dataset_with_windowsize(replay_dir,windowsize):
+    for replay_name in os.listdir(replay_dir / 'dataset'):
+        if replay_name.endswith('.npz'):
+            replay = np.load(replay_dir / 'dataset' / replay_name, allow_pickle=True)
+            # replay.keys()
+            replay_dict = OrderedDict(replay)
+
+            ### only use pics close to the reward
+
+            images = replay_dict['image']
+            wood = replay_dict['inventory_wood']
+
+            ## gather indices where a new woodlog is gathered
+            reward_ix = []
+            current_wood = 0
+
+            for i, w in enumerate(wood):
+                if w > current_wood:
+                    reward_ix.append(i)
+                    current_wood = w
+                if w < current_wood:
+                    current_wood = w
+
+            ## get cleaned data
+            for key in replay_dict.keys():
+
+                cleaned = [replay_dict[key][max(0, i - windowsize):i] for i in reward_ix]
+
+                if len(cleaned[0].shape) > 1:
+                    replay_dict[key] = np.vstack([replay_dict[key][max(0, i - windowsize):i] for i in reward_ix])
+                else:
+                    replay_dict[key] = np.concatenate([replay_dict[key][max(0, i - windowsize):i] for i in reward_ix])
+
+            ## save to new folders
+            makedirs(replay_dir / f'dataset_windowsize={windowsize}', exist_ok=True)
+            np.savez_compressed(replay_dir / f'dataset_windowsize={windowsize}' / replay_name, **replay_dict, )
