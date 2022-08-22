@@ -70,23 +70,27 @@ class CrafterVariationalEncoder(nn.Module):
 
         self.model = nn.Sequential(
             nn.Conv2d(ch, dims[0], k, step, p),  # to 64x64x32
-            nn.BatchNorm2d(dims[0]),
-            nn.MaxPool2d(2),  # to 32x32x32
+           # nn.BatchNorm2d(dims[0]),
+            #nn.MaxPool2d(2),  # to 32x32x32
+            nn.Conv2d(dims[0], dims[0], 3, 2, 1),
             nn.ReLU(),
 
             nn.Conv2d(dims[0], dims[1], k, step, p),  # to 32x32x64
-            nn.BatchNorm2d(dims[1]),
-            nn.MaxPool2d(2),  # to 16x16x64
+           # nn.BatchNorm2d(dims[1]),
+           # nn.MaxPool2d(2),  # to 16x16x64
+            nn.Conv2d(dims[1], dims[1], 3, 2, 1),
             nn.ReLU(),
 
             nn.Conv2d(dims[1], dims[2], k, step, p),  # to 16x16x128
-            nn.BatchNorm2d(dims[2]),
-            nn.MaxPool2d(2),  # to 8x8x128
+           # nn.BatchNorm2d(dims[2]),
+            #nn.MaxPool2d(2),  # to 8x8x128
+            nn.Conv2d(dims[2], dims[2], 3, 2, 1),
             nn.ReLU(),
 
             nn.Conv2d(dims[2], dims[3], k, step, p),  # to 8x8x256
-            nn.BatchNorm2d(dims[3]),
-            nn.MaxPool2d(2),  # to 4x4x256
+           # nn.BatchNorm2d(dims[3]),
+            #nn.MaxPool2d(2),  # to 4x4x256
+            nn.Conv2d(dims[3], dims[3], 3, 2, 1),
             nn.Tanh(),
            # nn.ReLU(),
         )
@@ -119,21 +123,25 @@ class CrafterDecoder(nn.Module):
     def __init__(self, dims):
         super(CrafterDecoder, self).__init__()
         self.model = nn.Sequential(
-            nn.Conv2d(dims[3], dims[2], k, step, p),
+            #nn.Conv2d(dims[3], dims[2], k, step, p),
+            torch.nn.ConvTranspose2d(in_channels=256, out_channels=128, kernel_size=3, stride=3, padding=2, dilation=1),
             nn.ReLU(),
-            nn.Upsample(scale_factor=2),
+            #nn.Upsample(scale_factor=2),
 
-            nn.Conv2d(dims[2], dims[1], k, step, p),
-            nn.ReLU(),
-            nn.Upsample(scale_factor=2),
 
-            nn.Conv2d(dims[1], dims[0], k, step, p),
+            #nn.Conv2d(dims[2], dims[1], k, step, p),
+            torch.nn.ConvTranspose2d(in_channels=128, out_channels=64, kernel_size=3, stride=3, padding=4, dilation=1),
             nn.ReLU(),
-            nn.Upsample(scale_factor=2),
+            #nn.Upsample(scale_factor=2),
 
-            nn.Conv2d(dims[0], dims[0], k, step, p),
+            torch.nn.ConvTranspose2d(in_channels=64, out_channels=32, kernel_size=3, stride=3, padding=8, dilation=1),
+            #nn.Conv2d(dims[1], dims[0], k, step, p),,
             nn.ReLU(),
-            nn.Upsample(scale_factor=2),
+            #nn.Upsample(scale_factor=2),
+            torch.nn.ConvTranspose2d(in_channels=32, out_channels=32, kernel_size=3, stride=3, padding=16, dilation=1),
+            #nn.Conv2d(dims[0], dims[0], k, step, p),
+            nn.ReLU(),
+            #nn.Upsample(scale_factor=2),
 
             nn.Conv2d(dims[0], ch, k, step, p),
             nn.Tanh()  # tanh-range is [-1, 1], sigmoid is [0, 1]
@@ -143,6 +151,7 @@ class CrafterDecoder(nn.Module):
         self.decoder_input = nn.Linear(latent_dim + 1, bottleneck)
 
     def forward(self, z, pred, evalu=False, dim=1):
+
         if evalu:
             z = z[0]  # batch_size is 1 when evaluating
             dim = 0

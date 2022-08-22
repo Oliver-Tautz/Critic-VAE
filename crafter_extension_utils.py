@@ -116,7 +116,7 @@ def crafter_image_evaluate(autoencoder, critic,inject=False,no_samples=10000,rem
 
     crafter_povs = load_crafter_pictures('dataset',download=False,windowsize=windowsize)
 
-    if no_samples:
+    if no_samples and no_samples<len(crafter_povs):
         crafter_povs = choose(crafter_povs,no_choices=no_samples,replace=False)
 
     imgs = []
@@ -169,7 +169,7 @@ def load_crafter_data(critic, recon_dset=False, vae=None,dataset_size=45000,wind
     critic_values = nn.Sigmoid()(critic.evaluate(pictures,100))
     critic_values = critic_values.cpu()
 
-    print(critic_values)
+    #print(critic_values)
 
     ix_low = np.where(critic_values <= 0.25)[0]
     ix_high = np.where(critic_values >= 0.7)[0]

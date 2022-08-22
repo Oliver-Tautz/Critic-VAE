@@ -6,15 +6,18 @@ w = 64 # original image width
 ch = 3 # image channels
 
 ### TRAINING DATA ###
-epochs = 5
+epochs = 10
 batch_size = 128
 lr = 0.00005
-k = 5 # kernel size
-p = 2 # padding
+#k=5
+k = 3 # kernel size
+
+#p=2
+p = 1 # padding
 step = 1
 bottleneck = 4096 # 4x4x256; bottleneck of convolutional layers
-latent_dim = 256 # fully-connected layer, from 4096 to 64 dim
-kld_weight = 0.001 # note: https://github.com/AntixK/PyTorch-VAE/issues/11 OR https://github.com/AntixK/PyTorch-VAE/issues/35
+latent_dim = 128 # fully-connected layer, from 4096 to 64 dim
+kld_weight = 0.002 # note: https://github.com/AntixK/PyTorch-VAE/issues/11 OR https://github.com/AntixK/PyTorch-VAE/issues/35
 
 total_images = 50000
 

@@ -36,9 +36,9 @@ low_samples_ix = np.random.choice(ix_low, int(dataset_size / 3))
 med_samples_ix = np.random.choice(ix_med, int(dataset_size / 3))
 high_samples_ix = np.random.choice(ix_high, int(dataset_size / 3))
 
-print(len(ix_low),len(ix_high),len(ix_med))
+#print(len(ix_low),len(ix_high),len(ix_med))
 
 samples_ix = np.concatenate((low_samples_ix, med_samples_ix, high_samples_ix))
 
-print(samples_ix)
+#print(samples_ix)
 
