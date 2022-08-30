@@ -19,6 +19,7 @@ class CrafterVariationalAutoencoder(nn.Module):
 
         return x, mu, logvar, recon
 
+
     def recon_samples(self, x, reward):
         mu, logvar = self.encoder(x)
         recons = []
@@ -55,6 +56,7 @@ class CrafterVariationalAutoencoder(nn.Module):
 
         torch.cuda.empty_cache()
         #recon_loss = F.mse_loss(recon, x)
+
         recon_loss = self.mssim_loss(recon, x)
         kld_loss = torch.mean(-0.5 * torch.sum(1 + logvar - mu ** 2 - logvar.exp(), dim=1), dim=0)
         kld_loss *= kld_weight
@@ -70,27 +72,31 @@ class CrafterVariationalEncoder(nn.Module):
 
         self.model = nn.Sequential(
             nn.Conv2d(ch, dims[0], k, step, p),  # to 64x64x32
+            nn.ReLU(),
            # nn.BatchNorm2d(dims[0]),
             #nn.MaxPool2d(2),  # to 32x32x32
             nn.Conv2d(dims[0], dims[0], 3, 2, 1),
             nn.ReLU(),
 
             nn.Conv2d(dims[0], dims[1], k, step, p),  # to 32x32x64
+            nn.ReLU(),
            # nn.BatchNorm2d(dims[1]),
            # nn.MaxPool2d(2),  # to 16x16x64
             nn.Conv2d(dims[1], dims[1], 3, 2, 1),
             nn.ReLU(),
 
-            nn.Conv2d(dims[1], dims[2], k, step, p),  # to 16x16x128
+            #nn.Conv2d(dims[1], dims[2], k, step, p),  # to 16x16x128
+            #nn.ReLU(),
            # nn.BatchNorm2d(dims[2]),
             #nn.MaxPool2d(2),  # to 8x8x128
-            nn.Conv2d(dims[2], dims[2], 3, 2, 1),
-            nn.ReLU(),
+            #nn.Conv2d(dims[2], dims[2], 3, 2, 1),
+            #nn.ReLU(),
 
-            nn.Conv2d(dims[2], dims[3], k, step, p),  # to 8x8x256
+            #nn.Conv2d(dims[2], dims[3], k, step, p),  # to 8x8x256
+            #nn.ReLU(),
            # nn.BatchNorm2d(dims[3]),
             #nn.MaxPool2d(2),  # to 4x4x256
-            nn.Conv2d(dims[3], dims[3], 3, 2, 1),
+            #nn.Conv2d(dims[3], dims[3], 3, 2, 1),
             nn.Tanh(),
            # nn.ReLU(),
         )
@@ -110,6 +116,7 @@ class CrafterVariationalEncoder(nn.Module):
         for layer in self.model:
             x = layer(x)
 
+
         z_flat = torch.flatten(x, start_dim=1)
         # z_flat = self.fcs(z_flat)
 
@@ -124,14 +131,14 @@ class CrafterDecoder(nn.Module):
         super(CrafterDecoder, self).__init__()
         self.model = nn.Sequential(
             #nn.Conv2d(dims[3], dims[2], k, step, p),
-            torch.nn.ConvTranspose2d(in_channels=256, out_channels=128, kernel_size=3, stride=3, padding=2, dilation=1),
-            nn.ReLU(),
+            #torch.nn.ConvTranspose2d(in_channels=256, out_channels=128, kernel_size=3, stride=3, padding=2, dilation=1),
+            #nn.ReLU(),
             #nn.Upsample(scale_factor=2),
 
 
             #nn.Conv2d(dims[2], dims[1], k, step, p),
-            torch.nn.ConvTranspose2d(in_channels=128, out_channels=64, kernel_size=3, stride=3, padding=4, dilation=1),
-            nn.ReLU(),
+            #torch.nn.ConvTranspose2d(in_channels=128, out_channels=64, kernel_size=3, stride=3, padding=4, dilation=1),
+            #nn.ReLU(),
             #nn.Upsample(scale_factor=2),
 
             torch.nn.ConvTranspose2d(in_channels=64, out_channels=32, kernel_size=3, stride=3, padding=8, dilation=1),
@@ -148,15 +155,20 @@ class CrafterDecoder(nn.Module):
             #nn.Sigmoid()
         )
 
-        self.decoder_input = nn.Linear(latent_dim + 1, bottleneck)
+        self.decoder_input = nn.Linear(latent_dim + 1, CRAFTER_BOTTLENECK)
 
     def forward(self, z, pred, evalu=False, dim=1):
 
         if evalu:
             z = z[0]  # batch_size is 1 when evaluating
             dim = 0
+        #print(self.decoder_input(torch.cat((z, pred), dim=dim)).shape)
+
         X = self.decoder_input(torch.cat((z, pred), dim=dim))
-        X = X.view(-1, 256, 4, 4)
+        print(X.shape)
+
+        X = X.view(-1, MAX_CHANNELS, BOTTLENECK_DIM, BOTTLENECK_DIM)
+
         X = self.model(X)
 
         return X
@@ -167,7 +179,15 @@ class CrafterDecoder(nn.Module):
 if __name__ == "__main__":
     encoder = CrafterVariationalEncoder([32, 64, 128, 256])
     decoder=CrafterDecoder([32, 64, 128, 256])
-    X = torch.zeros((1,3,64,64))
+    X = torch.zeros((128,3,64,64))
+    pred = torch.zeros((128,1))
+    print(pred.shape)
+    def reparametrize(mu, logvar):  # logvar is variance
+        std = torch.exp(0.5 * logvar)  # variance**2 = std
+        eps = torch.randn_like(std)
+        return mu + eps * std  # mean + random * standard-deviation
 
-    m , u = encoder(X)
-    print(m.shape,u.shape)
+    mu, logvar = encoder(X)
+    z_sample = reparametrize(mu, logvar)
+    recon = decoder(z_sample, pred)
+    #print(recon.shape)

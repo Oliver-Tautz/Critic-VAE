@@ -185,9 +185,9 @@ else: # REGULAR VAE
         else:
             critic = load_critic(CRAFTER_CRITIC_PATH,crafter=True)
         logger = Logger('./logs/vae' + str(time())[-5::])
-        print(args.crafter_windowsize)
+
         dset = load_crafter_data(critic,dataset_size=args.crafter_dataset_size,windowsize = args.crafter_windowsize)
-        print(len(dset))
+
         vae = train_on_crafter(vae, critic,dset, logger=logger)
 
         torch.save(vae.encoder.state_dict(), ENCODER_PATH)

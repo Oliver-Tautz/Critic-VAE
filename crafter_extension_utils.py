@@ -55,6 +55,7 @@ def train_on_crafter(autoencoder,critic, dset, logger=None):
             # NOTE: this will cut off incomplete batches from end of the random indices
             batch_indices = epoch_indices[batch_i:batch_i + batch_size]
             images = dset[batch_indices]
+            print('hehgehehe',images.shape)
             images = Tensor(images).to(device)
 
             # zero inventory
@@ -68,6 +69,7 @@ def train_on_crafter(autoencoder,critic, dset, logger=None):
 
 
             out = autoencoder(images, preds)
+            print(out[0].shape,out[1].shape)
 
             losses = autoencoder.vae_loss(out[0], out[1], out[2], out[3])
 
