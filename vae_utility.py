@@ -1,6 +1,6 @@
 from io import BytesIO
 import os
-import minerl
+#import minerl
 import statistics
 import torch
 from torch import Tensor
@@ -407,7 +407,7 @@ def load_minerl_data(critic, recon_dset=False, vae=None):
 
     ### Initialize mineRL dataset ###
     #os.environ['MINERL_DATA_ROOT'] = MINERL_DATA_ROOT_PATH
-    data = minerl.data.make('MineRLTreechop-v0', num_workers=1)
+   # data = minerl.data.make('MineRLTreechop-v0', num_workers=1)
 
     trajectory_names = data.get_trajectory_names()
     rng = np.random.default_rng(seed=0)

@@ -104,7 +104,7 @@ def choose(X, no_choices, replace=True):
     return X[choices]
 
 
-def crafter_image_evaluate(autoencoder, critic,inject=False,no_samples=10000,remove_inv_for_vae=True,windowsize=None):
+def crafter_image_evaluate(autoencoder, critic,inject=False,no_samples=1000,remove_inv_for_vae=True,windowsize=None):
     """
     Batch processing could really speed this up i think :O
 
