@@ -46,7 +46,7 @@ class Critic(nn.Module):
 
         self.crit = nn.Sequential(
             nn.Flatten(),
-            nn.Linear(chfak * bottleneck, chfak * bottleneck),
+            nn.Linear(480, chfak * bottleneck),
             activation(),
             nn.Dropout(dropout),
             nn.Linear(chfak * bottleneck, 1)  # ,
