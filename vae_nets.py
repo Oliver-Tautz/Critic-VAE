@@ -185,7 +185,7 @@ class MSSIM(nn.Module):
              in_channel: int,
              size_average: bool) -> Tensor:
 
-        print(img1.shape, img2.shape)
+       # print(img1.shape, img2.shape)
         device = img1.device
         window = self.create_window(window_size, in_channel).to(device)
         mu1 = F.conv2d(img1, window, padding= window_size//2, groups=in_channel)

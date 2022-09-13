@@ -189,7 +189,7 @@ if __name__ == "__main__":
     decoder=CrafterDecoder([32, 64, 128, 256])
     X = torch.zeros((128,3,64,64))
     pred = torch.zeros((128,1))
-    print(pred.shape)
+    #print(pred.shape)
     def reparametrize(mu, logvar):  # logvar is variance
         std = torch.exp(0.5 * logvar)  # variance**2 = std
         eps = torch.randn_like(std)

@@ -67,8 +67,8 @@ def train_on_crafter(autoencoder,critic, dset, logger=None):
             opt.zero_grad()
 
 
-            print('preds:', preds.shape)
-            print('preds:', preds.shape)
+            #print('preds:', preds.shape)
+            #print('preds:', preds.shape)
 
             out = autoencoder(images, preds)
 
