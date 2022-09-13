@@ -34,7 +34,7 @@ class Critic(nn.Module):
             pool,
             nn.Conv2d(dims[1], dims[2], 3, stride, 1),
             activation(),
-            pool,
+           # pool,
             nn.Dropout(dropout),
             nn.Conv2d(dims[2], dims[3], 3, stride, 1),
             activation(),
