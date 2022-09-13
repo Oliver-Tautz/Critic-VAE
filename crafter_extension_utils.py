@@ -55,6 +55,7 @@ def train_on_crafter(autoencoder,critic, dset, logger=None):
             # NOTE: this will cut off incomplete batches from end of the random indices
             batch_indices = epoch_indices[batch_i:batch_i + batch_size]
             images = dset[batch_indices]
+
             print('hehgehehe',images.shape)
             images = Tensor(images).to(device)
 
@@ -66,10 +67,13 @@ def train_on_crafter(autoencoder,critic, dset, logger=None):
             opt.zero_grad()
 
 
-
+            print('preds:', preds.shape)
+            print('preds:', preds.shape)
 
             out = autoencoder(images, preds)
-            print(out[0].shape,out[1].shape)
+
+
+            #print(out[0].shape,out[1].shape)
 
             losses = autoencoder.vae_loss(out[0], out[1], out[2], out[3])
 
@@ -167,6 +171,7 @@ def load_crafter_data(critic, recon_dset=False, vae=None,dataset_size=45000,wind
     pictures = load_crafter_pictures('dataset',windowsize=windowsize)
 
     pictures = torch.tensor(pictures).permute(0, 3, 1, 2) / 255
+    pictures = pictures[:, :, 0:49]
 
     critic_values = nn.Sigmoid()(critic.evaluate(pictures,100))
     critic_values = critic_values.cpu()

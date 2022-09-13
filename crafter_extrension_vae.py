@@ -17,6 +17,10 @@ class CrafterVariationalAutoencoder(nn.Module):
         z_sample = self.reparametrize(mu, logvar)
         recon = self.decoder(z_sample, pred)
 
+        """print('x: ', x.shape)
+        print('mu: ', mu.shape)
+        print('logvar: ', logvar.shape)
+        print('recon: ', recon.shape)"""
         return x, mu, logvar, recon
 
 
@@ -141,11 +145,13 @@ class CrafterDecoder(nn.Module):
             #nn.ReLU(),
             #nn.Upsample(scale_factor=2),
 
-            torch.nn.ConvTranspose2d(in_channels=64, out_channels=32, kernel_size=3, stride=3, padding=8, dilation=1),
+            torch.nn.ConvTranspose2d(in_channels=64, out_channels=32, kernel_size=3, stride=(2, 3), padding=(1, 8),
+                                     dilation=1),
             #nn.Conv2d(dims[1], dims[0], k, step, p),,
             nn.ReLU(),
             #nn.Upsample(scale_factor=2),
-            torch.nn.ConvTranspose2d(in_channels=32, out_channels=32, kernel_size=3, stride=3, padding=16, dilation=1),
+            torch.nn.ConvTranspose2d(in_channels=32, out_channels=32, kernel_size=3, stride=(2, 3), padding=(1, 16),
+                                     dilation=1),
             #nn.Conv2d(dims[0], dims[0], k, step, p),
             nn.ReLU(),
             #nn.Upsample(scale_factor=2),
@@ -153,6 +159,8 @@ class CrafterDecoder(nn.Module):
             nn.Conv2d(dims[0], ch, k, step, p),
             nn.Tanh()  # tanh-range is [-1, 1], sigmoid is [0, 1]
             #nn.Sigmoid()
+
+
         )
 
         self.decoder_input = nn.Linear(latent_dim + 1, CRAFTER_BOTTLENECK)
@@ -165,9 +173,9 @@ class CrafterDecoder(nn.Module):
         #print(self.decoder_input(torch.cat((z, pred), dim=dim)).shape)
 
         X = self.decoder_input(torch.cat((z, pred), dim=dim))
-        print(X.shape)
+        #print(X.shape)
 
-        X = X.view(-1, MAX_CHANNELS, BOTTLENECK_DIM, BOTTLENECK_DIM)
+        X = X.view(-1,64,13,16)
 
         X = self.model(X)
 

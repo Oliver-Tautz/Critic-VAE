@@ -16,7 +16,7 @@ k = 3 # kernel size
 p = 1 # padding
 step = 1
 bottleneck = 4096 # 4x4x256; bottleneck of convolutional layers
-latent_dim = 512 # fully-connected layer, from 4096 to 64 dim
+latent_dim = 64 # fully-connected layer, from 4096 to 64 dim
 kld_weight = 0.002 # note: https://github.com/AntixK/PyTorch-VAE/issues/11 OR https://github.com/AntixK/PyTorch-VAE/issues/35
 
 total_images = 50000
@@ -40,7 +40,7 @@ SECOND_DECODER_PATH = 'vae2_decoder.pt'
 
 CRITIC_PATH = 'saved-networks/critic-rewidx=1-cepochs=15-datamode=trunk-datasize=99999-shift=12-chfak=1-dropout=0.3.pt'
 CRAFTER_CRITIC_PATH_REAL = f"crafter_models/critic-batch_size=32-dataset_size=45000-epochs=50_real/critic.pt"
-CRAFTER_CRITIC_PATH = f"crafter_models/critic-windowsize=5-batch_size=32-dataset_size=45000-epochs=50/critic.pt"
+CRAFTER_CRITIC_PATH = f"crafter_models/critic-windowsize=20-batch_size=32-dataset_size=45000-epochs=50/critic.pt"
 SECOND_CRITIC_PATH = 'saved-networks/critic-rewidx=1-cepochs=15-datamode=trunk-datasize=100000-shift=12-chfak=1-dropout=0.3.pt'
 
 MINERL_DATA_ROOT_PATH = '/homes/lcicek/anaconda3/envs/vae/lib/python3.6/site-packages/minerl'
@@ -49,7 +49,7 @@ MAX_CHANNELS = 64#256
 BOTTLENECK_DIM = 16#4
 
 CRAFTER_DATASET_SIZE=50000
-CRAFTER_BOTTLENECK = BOTTLENECK_DIM ** 2 * MAX_CHANNELS
+CRAFTER_BOTTLENECK = 13312 #BOTTLENECK_DIM ** 2 * MAX_CHANNELS
 CRAFTER_IMAGE_SHAPE = (64,49,3)
 
 
