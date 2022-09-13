@@ -58,6 +58,7 @@ class Critic(nn.Module):
         embeds = []
         # print(list(self.features))
         for layer in list(self.features):
+            print(X.shape)
             X = layer(X)
             if collect and isinstance(layer, type(self.pool)):
                 embeds.append(X)
