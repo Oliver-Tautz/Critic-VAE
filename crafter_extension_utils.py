@@ -56,7 +56,7 @@ def train_on_crafter(autoencoder,critic, dset, logger=None):
             batch_indices = epoch_indices[batch_i:batch_i + batch_size]
             images = dset[batch_indices]
 
-            print('hehgehehe',images.shape)
+            #print('hehgehehe',images.shape)
             images = Tensor(images).to(device)
 
             # zero inventory
@@ -77,6 +77,7 @@ def train_on_crafter(autoencoder,critic, dset, logger=None):
 
             losses = autoencoder.vae_loss(out[0], out[1], out[2], out[3])
 
+
             epoch_data['total_loss'].append(losses['total_loss'].detach())
             epoch_data['recon_loss'].append(losses['recon_loss'].detach())
             epoch_data['KLD'].append(losses['KLD'].detach())
@@ -96,6 +97,7 @@ def train_on_crafter(autoencoder,critic, dset, logger=None):
         training_data['recon_loss'].append(np.mean(epoch_data['recon_loss']))
         training_data['KLD'].append(np.mean(epoch_data['KLD']))
         pd.DataFrame(training_data).to_csv('log.csv')
+        print(epoch_data)
 
 
     return autoencoder

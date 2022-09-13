@@ -57,11 +57,11 @@ class CrafterVariationalAutoencoder(nn.Module):
         return mu + eps * std  # mean + random * standard-deviation
 
     def vae_loss(self, x, mu, logvar, recon):
-
+        #print(x, mu, logvar, recon)
         torch.cuda.empty_cache()
-        #recon_loss = F.mse_loss(recon, x)
+        recon_loss = F.mse_loss(recon, x)
 
-        recon_loss = self.mssim_loss(recon, x)
+        #recon_loss = self.mssim_loss(recon, x)
         kld_loss = torch.mean(-0.5 * torch.sum(1 + logvar - mu ** 2 - logvar.exp(), dim=1), dim=0)
         kld_loss *= kld_weight
 
