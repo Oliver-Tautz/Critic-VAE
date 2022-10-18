@@ -79,9 +79,10 @@ def train_on_crafter(autoencoder,critic, dset, logger=None):
             losses = autoencoder.vae_loss(out[0], out[1], out[2], out[3])
 
 
-            epoch_data['total_loss'].append(losses['total_loss'].detach())
-            epoch_data['recon_loss'].append(losses['recon_loss'].detach())
-            epoch_data['KLD'].append(losses['KLD'].detach())
+
+            epoch_data['total_loss'].append(losses['total_loss'].cpu().detach())
+            epoch_data['recon_loss'].append(losses['recon_loss'].cpu().detach())
+            epoch_data['KLD'].append(losses['KLD'].cpu().detach())
 
             loss = losses['total_loss']
             loss.backward()
