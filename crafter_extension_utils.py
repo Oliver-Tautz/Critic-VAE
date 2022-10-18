@@ -159,6 +159,7 @@ def crafter_image_evaluate(autoencoder, critic,crafter_povs=None,inject=False,no
 
         crafter_pov = crafter_pov.permute(2, 0, 1)
         crafter_pov = crafter_pov.unsqueeze(0)/255
+        crafter_pov = crafter_pov.to(device)
 
 
         x, mu, logvar, recon= autoencoder(crafter_pov,critic(crafter_pov))
