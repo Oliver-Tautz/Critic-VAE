@@ -115,8 +115,8 @@ def choose(X, no_choices, replace=True):
 def plot_side_by_side(filename,in_im,out_im):
     import matplotlib.pyplot as plt
 
-    in_im = in_im.detach().numpy()
-    out_im = out_im.detach().numpy()
+    in_im = in_im.cpu().detach().numpy()
+    out_im = out_im.cpu().detach().numpy()
 
 
     in_im = in_im.squeeze().transpose(1,2,0)*255
