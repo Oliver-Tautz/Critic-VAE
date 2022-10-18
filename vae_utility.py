@@ -248,11 +248,11 @@ def get_injected_img(autoencoder, img_tensor, pred):
     recons = autoencoder.inject(img_tensor)
 
     conc_h = np.concatenate((
-        to_np(img_tensor.view(-1, ch, w, w)[0]),
+        to_np(img_tensor.view(-1, ch, h, w)[0]),
         #to_np(orig_recon.view(-1, ch, w, w)[0]),
     ), axis=2)
 
-    conc_recons = np.concatenate([to_np(recons[i].view(-1, ch, w, w)[0]) for i in range(inject_n)], axis=2)
+    conc_recons = np.concatenate([to_np(recons[i].view(-1, ch, h, w)[0]) for i in range(inject_n)], axis=2)
     conc_h = np.concatenate((conc_h, conc_recons), axis=2)
 
     _, img = prepare_rgb_image(conc_h)
@@ -270,8 +270,10 @@ def get_diff_image(autoencoder, img_tensor, pred, one=False):
     recon_one = autoencoder.evaluate(img_tensor, high_tensor)
     recon_zero = autoencoder.evaluate(img_tensor, low_tensor)
 
-    recon_one = to_np(recon_one.view(-1, ch, w, w)[0])
-    recon_zero = to_np(recon_zero.view(-1, ch, w, w)[0])
+    print(recon_one.shape)
+
+    recon_one = to_np(recon_one.view(-1, ch, h, w)[0])
+    recon_zero = to_np(recon_zero.view(-1, ch, h, w)[0])
 
     diff = np.subtract(recon_zero, recon_one)
     diff = abs(diff)
@@ -291,7 +293,7 @@ def prepare_diff(diff_img, diff_factor, mean_max):
 
 def get_final_frame(img_tensor, recon_one, recon_zero, diff_img, pred, gt_img=None, thr_img=None, crf_img=None, thr_iou=None, crf_iou=None):
     conc_h = np.array(np.concatenate((
-        to_np(img_tensor.view(-1, ch, w, w)[0]),
+        to_np(img_tensor.view(-1, ch, h, w)[0]),
         recon_one,
         recon_zero,
     ), axis=2))

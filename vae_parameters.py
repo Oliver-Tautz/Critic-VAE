@@ -2,11 +2,23 @@ import torch
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu' # maybe cuda instead of cuda:0
 #device = 'cpu'
 ### IMAGE DATA ###
-w = 64 # original image width
-ch = 3 # image channels
+
+
+CRAFTER_DATASET_SIZE=50000
+
+CRAFTER_IMAGE_SHAPE = (64,48,3)
+CRAFTER_USE_MMSSIM = True
+
+w = CRAFTER_IMAGE_SHAPE[0] # original image width
+h = CRAFTER_IMAGE_SHAPE[1] # original image height
+ch = CRAFTER_IMAGE_SHAPE[2] # image channels
+
+MAX_CHANNELS = 64#256
+
+
 
 ### TRAINING DATA ###
-epochs = 10
+epochs = 400
 batch_size = 256
 lr = 0.00005
 #k=5
@@ -15,8 +27,8 @@ k = 3 # kernel size
 #p=2
 p = 1 # padding
 step = 1
-bottleneck = 4096 # 4x4x256; bottleneck of convolutional layers
-latent_dim = 64 # fully-connected layer, from 4096 to 64 dim
+bottleneck = MAX_CHANNELS*int(CRAFTER_IMAGE_SHAPE[1]/4)* int(CRAFTER_IMAGE_SHAPE[0]/4 )
+latent_dim = 32 # fully-connected layer, from 4096 to 64 dim
 kld_weight = 0.002 # note: https://github.com/AntixK/PyTorch-VAE/issues/11 OR https://github.com/AntixK/PyTorch-VAE/issues/35
 
 total_images = 50000
@@ -45,11 +57,6 @@ SECOND_CRITIC_PATH = 'saved-networks/critic-rewidx=1-cepochs=15-datamode=trunk-d
 
 MINERL_DATA_ROOT_PATH = '/homes/lcicek/anaconda3/envs/vae/lib/python3.6/site-packages/minerl'
 
-MAX_CHANNELS = 64#256
-BOTTLENECK_DIM = 16#4
 
-CRAFTER_DATASET_SIZE=50000
-CRAFTER_BOTTLENECK = 13312 #BOTTLENECK_DIM ** 2 * MAX_CHANNELS
-CRAFTER_IMAGE_SHAPE = (64,49,3)
 
 

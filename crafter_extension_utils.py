@@ -33,7 +33,7 @@ def remove_inventory(povs):
 
 def train_on_crafter(autoencoder,critic, dset, logger=None):
     #frames, gt_frames = load_textured_minerl()
-    dset = np.stack(dset).squeeze()[:CRAFTER_DATASET_SIZE]
+    dset = np.stack(dset).squeeze()
     opt = torch.optim.AdamW(autoencoder.parameters())
     num_samples = dset.shape[0]
 
@@ -56,14 +56,15 @@ def train_on_crafter(autoencoder,critic, dset, logger=None):
             batch_indices = epoch_indices[batch_i:batch_i + batch_size]
             images = dset[batch_indices]
 
-            #print('hehgehehe',images.shape)
+
             images = Tensor(images).to(device)
 
-            # zero inventory
-            images = remove_inventory(images)
 
 
             preds = critic.evaluate(images)
+
+
+
             opt.zero_grad()
 
 
@@ -110,7 +111,26 @@ def choose(X, no_choices, replace=True):
     return X[choices]
 
 
-def crafter_image_evaluate(autoencoder, critic,inject=False,no_samples=1000,remove_inv_for_vae=True,windowsize=None):
+def plot_side_by_side(filename,in_im,out_im):
+    import matplotlib.pyplot as plt
+
+    in_im = in_im.detach().numpy()
+    out_im = out_im.detach().numpy()
+
+
+    in_im = in_im.squeeze().transpose(1,2,0)*255
+    out_im = out_im.squeeze().transpose(1,2,0)*255
+    f, (ax1, ax2) = plt.subplots(1,2)
+
+    ax1.imshow(in_im.astype(np.uint8))
+    ax2.imshow(out_im.astype(np.uint8))
+    ax1.axis('off')
+    ax2.axis('off')
+    plt.savefig(filename,bbox_inches='tight')
+    plt.close(f)
+    del f
+
+def crafter_image_evaluate(autoencoder, critic,crafter_povs=None,inject=False,no_samples=1000,remove_inv_for_vae=True,windowsize=None):
     """
     Batch processing could really speed this up i think :O
 
@@ -122,13 +142,27 @@ def crafter_image_evaluate(autoencoder, critic,inject=False,no_samples=1000,remo
 
     print('evaluating source images...')
 
-    crafter_povs = load_crafter_pictures('dataset',download=False,windowsize=windowsize)
+    if crafter_povs==None:
+        crafter_povs = load_crafter_pictures('dataset',download=False,windowsize=windowsize)[0:100]
+        print(crafter_povs.shape)
+
+    #print(crafter_povs.shape)
+
 
     if no_samples and no_samples<len(crafter_povs):
         crafter_povs = choose(crafter_povs,no_choices=no_samples,replace=False)
 
     imgs = []
 
+    for i,crafter_pov in enumerate(crafter_povs):
+
+        crafter_pov = crafter_pov.permute(2, 0, 1)
+        crafter_pov = crafter_pov.unsqueeze(0)/255
+
+
+        x, mu, logvar, recon= autoencoder(crafter_pov,critic(crafter_pov))
+        os.makedirs('my_images',exist_ok=True)
+        plot_side_by_side(f'my_images/pov_recon_{i}.jpg',crafter_pov, recon)
 
     diff_max_values = []
     for i, crafter_pov in tqdm(enumerate(crafter_povs),desc='evaluate_dataset_step1',total=len(crafter_povs)):
@@ -136,12 +170,13 @@ def crafter_image_evaluate(autoencoder, critic,inject=False,no_samples=1000,remo
         orig_img = crafter_pov
         img_array = adjust_values(orig_img)
         img_array = img_array.transpose(2, 0, 1)  # HWC to CHW for critic
+
         img_array = img_array[np.newaxis, ...]  # add batch_size = 1 to make it BCHW
+        img_array = img_array[:, :, 0:48]
         img_tensor = Tensor(img_array).to(device)
 
         pred = critic.evaluate(img_tensor)
-        if remove_inv_for_vae:
-            img_tensor[:,:,49:,] = 0
+
 
         if inject:
             img = get_injected_img(autoencoder, img_tensor, pred[0])
@@ -173,9 +208,9 @@ def load_crafter_data(critic, recon_dset=False, vae=None,dataset_size=45000,wind
     pictures = load_crafter_pictures('dataset',windowsize=windowsize)
 
     pictures = torch.tensor(pictures).permute(0, 3, 1, 2) / 255
-    pictures = pictures[:, :, 0:49]
+    pictures = pictures[:, :, 0:48]
 
-    critic_values = nn.Sigmoid()(critic.evaluate(pictures,100))
+    critic_values = nn.Sigmoid()(critic.evaluate(pictures,batchsize=100))
     critic_values = critic_values.cpu()
 
     #print(critic_values)
