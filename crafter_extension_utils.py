@@ -207,7 +207,7 @@ def plot_side_by_side(filename, ims, labels=None, title=None):
 
     f, axs = plt.subplots(1, len(ims))
     if labels == None:
-        labels = range(len(ims))
+        labels = ['']*len(ims)
     if len(labels) < len(ims):
         labels.extend(['none'] * (len(ims) - len(labels)))
 
@@ -221,7 +221,7 @@ def plot_side_by_side(filename, ims, labels=None, title=None):
 
     if title:
         f.suptitle(title, y=0.8)
-    plt.savefig(filename, bbox_inches='tight')
+    plt.savefig(filename, bbox_inches='tight',dpi=300)
 
     plt.close(f)
     del f
