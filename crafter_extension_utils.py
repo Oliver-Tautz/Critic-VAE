@@ -222,8 +222,7 @@ def choose(X, no_choices, replace=True):
 def plot_side_by_side(filename, ims, labels=None,title=None):
     import matplotlib.pyplot as plt
     import matplotlib
-    font = {'family': 'normal',
-            'weight': 'bold',
+    font = {
             'size': 7}
 
     matplotlib.rc('font', **font)
