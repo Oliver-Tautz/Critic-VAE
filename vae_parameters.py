@@ -52,6 +52,7 @@ SECOND_DECODER_PATH = 'vae2_decoder.pt'
 
 CRITIC_PATH = 'saved-networks/critic-rewidx=1-cepochs=15-datamode=trunk-datasize=99999-shift=12-chfak=1-dropout=0.3.pt'
 CRAFTER_CRITIC_PATH_REAL = f"crafter_models/critic-batch_size=32-dataset_size=45000-epochs=50_real/critic.pt"
+#CRAFTER_CRITIC_PATH = f"crafter_models/critic-windowsize=25-batch_size=32-dataset_size=45000-epochs=400/critic.pt"
 CRAFTER_CRITIC_PATH = f"crafter_models/critic-windowsize=20-batch_size=32-dataset_size=45000-epochs=50/critic.pt"
 SECOND_CRITIC_PATH = 'saved-networks/critic-rewidx=1-cepochs=15-datamode=trunk-datasize=100000-shift=12-chfak=1-dropout=0.3.pt'
 
