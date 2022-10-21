@@ -85,6 +85,8 @@ def train_on_crafter(autoencoder,critic, dset, logger=None,epochs=0, test_data =
     num_samples = dset.shape[0]
     num_samples_eval = test_data.shape[0]
 
+
+
     # Start training
 
     training_data = {'total_loss':[],
@@ -97,6 +99,8 @@ def train_on_crafter(autoencoder,critic, dset, logger=None,epochs=0, test_data =
     for ep in trange(epochs, desc='train_epochs'):  # change
         autoencoder.train()
         epoch_indices = np.arange(num_samples)
+        epoch_indices_eval = np.arange(num_samples_eval)
+
         np.random.shuffle(epoch_indices)
 
         epoch_data = {'total_loss':[],
@@ -152,7 +156,7 @@ def train_on_crafter(autoencoder,critic, dset, logger=None,epochs=0, test_data =
         with torch.no_grad():
             for batch_i in trange(0,  num_samples_eval, batch_size, desc='eval_batches'):
                 # NOTE: this will cut off incomplete batches from end of the random indices
-                batch_indices = epoch_indices[batch_i:batch_i + batch_size]
+                batch_indices = epoch_indices_eval[batch_i:batch_i + batch_size]
                 images = test_data[batch_indices]
 
                 images = Tensor(images).to(device)
@@ -375,7 +379,7 @@ def load_crafter_data(critic, dataset_size=45000,windowsize=None,test_split=0.2)
 
     dset_train=pictures[samples_ix]
 
-    print('this!',dset_train.shape,pictures_test.shape)
+
     return dset_train, pictures_test
 
 def load_crafter_pictures(replay_dir, target_inventory_item='inventory_wood', download=True, interpolate_to_float=False,windowsize=None):
