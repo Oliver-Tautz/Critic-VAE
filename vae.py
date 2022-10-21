@@ -39,7 +39,10 @@ parser.add_argument('-second', action='store_true')  # train second VAE
 parser.add_argument('-evalsecond', action='store_true')
 parser.add_argument('-video', action='store_true')
 parser.add_argument('-thresh', action='store_true')  # test threshold
+parser.add_argument('-crafter-epochs', type=int, default=400)
 args = parser.parse_args()
+
+epochs = args.crafter_epochs
 
 
 def train(autoencoder, dset, logger=None):
@@ -66,9 +69,9 @@ def train(autoencoder, dset, logger=None):
 
             losses = autoencoder.vae_loss(out[0], out[1], out[2], out[3])
 
+            loss = losses['total_loss']
 
-
-            print('loss:',loss)
+            print('loss:', loss)
             loss.backward()
             opt.step()
 
@@ -193,23 +196,29 @@ else:  # REGULAR VAE
             critic = load_critic(CRAFTER_CRITIC_PATH, crafter=True)
         logger = Logger('./logs/vae' + str(time())[-5::])
 
-        #print(args.crafter_dataset_size)
-        dset = load_crafter_data(critic, dataset_size=args.crafter_dataset_size, windowsize=args.crafter_windowsize)
-        #print(dset.shape)
+        # print(args.crafter_dataset_size)
+        dset, dset_test = load_crafter_data(critic, dataset_size=args.crafter_dataset_size,
+                                            windowsize=args.crafter_windowsize)
+        # print(dset.shape)
 
-        vae = train_on_crafter(vae, critic, dset, logger=logger)
+        vae = train_on_crafter(vae, critic, dset, logger=logger, epochs=epochs, test_data=dset_test)
 
         torch.save(vae.encoder.state_dict(), ENCODER_PATH)
         torch.save(vae.decoder.state_dict(), DECODER_PATH)
 
-        crafter_image_evaluate(vae, critic, inject = args.inject,crafter_povs=torch.permute(dset,(0,2,3,1))*255)
+        crafter_image_evaluate(vae, critic, inject=args.inject,
+                               crafter_train_povs=torch.permute(dset, (0, 2, 3, 1)) * 255, crafter_test_povs=torch.permute(dset_test, (0, 2, 3, 1)) * 255)
 
     elif args.eval_crafter:
 
         critic = load_critic(CRAFTER_CRITIC_PATH, crafter=True)
         vae = CrafterVariationalAutoencoder().to(device)
         load_vae_network(vae, second_vae=False)
-        crafter_image_evaluate(vae, critic, args.inject)
+
+        dset, dset_test = load_crafter_data(critic, dataset_size=args.crafter_dataset_size,
+                                            windowsize=args.crafter_windowsize)
+        crafter_image_evaluate(vae, critic, inject=args.inject,
+                               crafter_train_povs=torch.permute(dset, (0, 2, 3, 1)) * 255, crafter_test_povs=dset_test)
 
 
 

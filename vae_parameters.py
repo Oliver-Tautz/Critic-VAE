@@ -18,7 +18,7 @@ MAX_CHANNELS = 64#256
 
 
 ### TRAINING DATA ###
-epochs = 400
+epochs = 4
 batch_size = 256
 lr = 0.00005
 #k=5

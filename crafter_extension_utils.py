@@ -15,12 +15,17 @@ from vae_utility import adjust_values, get_injected_img, get_diff_image, prepare
 from os.path import exists
 from collections import OrderedDict
 from os import makedirs
-
+from sklearn.model_selection import train_test_split
 import multiprocessing
 ncpu = multiprocessing.cpu_count()
 import torch
 import os
 
+import pickle
+
+
+def torch_to_numpy(x):
+    return x.cpu().detach().numpy()
 
 torch.set_num_threads(ncpu)
 torch.set_num_interop_threads(ncpu)
@@ -30,10 +35,52 @@ def remove_inventory(povs):
     povs[:, :, 49:, ] = 0
     return povs
 
+def choose(arr,n):
+    ix = np.random.choice(range(arr),n)
+    return arr[ix]
 
-def train_on_crafter(autoencoder,critic, dset, logger=None):
+
+def plot_predictions(autoencoder,critic,ims,filename,labels=['train','test']):
+
+
+    images = torch.stack(ims).to(device)
+    preds = critic.evaluate(images)
+
+
+
+    # print('preds:', preds.shape)
+    # print('preds:', preds.shape)
+
+    _, _, _, recons = autoencoder(images, preds)
+
+    l = []
+    l_labels = []
+    for im,rec, label in zip(ims,recons,labels):
+        l.append(torch_to_numpy(im))
+        l_labels.append(label +'_original')
+        l.append(torch_to_numpy(rec))
+        l_labels.append(label +'_reconstruction')
+
+
+    plot_side_by_side(filename,l, l_labels)
+def train_on_crafter(autoencoder,critic, dset, logger=None,epochs=0, test_data = None):
     #frames, gt_frames = load_textured_minerl()
+
+
+
+
+
     dset = np.stack(dset).squeeze()
+
+    # setup fixed datapoints to track through training
+    os.makedirs("crafter_npy",exist_ok=True)
+
+    train_ims =  torch.tensor(choose(dset,100))
+    test_ims  = torch.tensor(choose(test_data,100))
+
+
+
+
     opt = torch.optim.AdamW(autoencoder.parameters())
     num_samples = dset.shape[0]
 
@@ -50,7 +97,7 @@ def train_on_crafter(autoencoder,critic, dset, logger=None):
         epoch_data = {'total_loss':[],
                      'recon_loss':[],
                      'KLD':[]}
-
+        images_to_plot = dset[0:2]
         for batch_i in trange(0, num_samples, batch_size, desc='train_batches'):
             # NOTE: this will cut off incomplete batches from end of the random indices
             batch_indices = epoch_indices[batch_i:batch_i + batch_size]
@@ -58,12 +105,7 @@ def train_on_crafter(autoencoder,critic, dset, logger=None):
 
 
             images = Tensor(images).to(device)
-
-
-
             preds = critic.evaluate(images)
-
-
 
             opt.zero_grad()
 
@@ -89,17 +131,35 @@ def train_on_crafter(autoencoder,critic, dset, logger=None):
             opt.step()
 
 
+
             if batch_i % log_n == 0:
-                print(f'    ep:{ep}, imgs:{num_samples * ep + (batch_i + 1)}', end='\r')
+                #print(f'    ep:{ep}, imgs:{num_samples * ep + (batch_i + 1)}', end='\r')
 
                 if logger is not None:
                     log_info(losses, logger, batch_i, ep, num_samples)
+
+        os.makedirs('crafter_images/images_per_epoch',exist_ok=True)
+
+        # plot some images through time
+        plot_predictions(autoencoder,critic,[train_ims[0],test_ims[0]],f'crafter_images/images_per_epoch/pov_recon_{ep}.jpg')
+
+
+        # save some predictions after every 10 steps
+        makedirs("crafter_vae_checkpoint",exist_ok=True)
+        if ep%10 == 0 :
+
+            torch.save(autoencoder.encoder.state_dict(), f"crafter_vae_checkpoint/encoder-epoch={ep}")
+            torch.save(autoencoder.decoder.state_dict(), f"crafter_vae_checkpoint/decoder-epoch={ep}" )
+
+            # load with
+            #         vae.encoder.load_state_dict(torch.load(enc_path))
+            #         vae.decoder.load_state_dict(torch.load(dec_path))
 
         training_data['total_loss'].append(np.mean(epoch_data['total_loss']))
         training_data['recon_loss'].append(np.mean(epoch_data['recon_loss']))
         training_data['KLD'].append(np.mean(epoch_data['KLD']))
         pd.DataFrame(training_data).to_csv('log.csv')
-        print(epoch_data)
+
 
 
     return autoencoder
@@ -112,26 +172,37 @@ def choose(X, no_choices, replace=True):
     return X[choices]
 
 
-def plot_side_by_side(filename,in_im,out_im):
+def plot_side_by_side(filename, ims, labels=None,title=None):
     import matplotlib.pyplot as plt
+    import matplotlib
+    font = {'family': 'normal',
+            'weight': 'bold',
+            'size': 7}
 
-    in_im = in_im.cpu().detach().numpy()
-    out_im = out_im.cpu().detach().numpy()
+    matplotlib.rc('font', **font)
+
+    f, axs = plt.subplots(1, len(ims))
+    if labels == None:
+        labels = range(len(ims))
+    if len(labels) < len(ims):
+        labels.extend(['none'] * (len(ims) - len(labels)))
+
+    for ax, im, label in zip(axs, ims, labels[0:len(ims)]):
+        if torch.is_tensor(im):
+            im = torch_to_numpy(im)
+        im = im.squeeze().transpose(1, 2, 0) * 255
+        ax.imshow(im.astype(np.uint8))
+        ax.title.set_text(str(label))
+        ax.axis('off')
 
 
-    in_im = in_im.squeeze().transpose(1,2,0)*255
-    out_im = out_im.squeeze().transpose(1,2,0)*255
-    f, (ax1, ax2) = plt.subplots(1,2)
+    if title:
+        f.suptitle(title,y=0.8)
+    plt.savefig(filename, bbox_inches='tight')
 
-    ax1.imshow(in_im.astype(np.uint8))
-    ax2.imshow(out_im.astype(np.uint8))
-    ax1.axis('off')
-    ax2.axis('off')
-    plt.savefig(filename,bbox_inches='tight')
     plt.close(f)
     del f
-
-def crafter_image_evaluate(autoencoder, critic,crafter_povs=None,inject=False,no_samples=1000,remove_inv_for_vae=True,windowsize=None):
+def crafter_image_evaluate(autoencoder, critic, crafter_train_povs=None,crafter_test_povs = None, inject=False, no_samples=1000, remove_inv_for_vae=True, windowsize=None):
     """
     Batch processing could really speed this up i think :O
 
@@ -142,32 +213,48 @@ def crafter_image_evaluate(autoencoder, critic,crafter_povs=None,inject=False,no
     """
 
     print('evaluating source images...')
+    print(crafter_train_povs.shape,crafter_test_povs.shape)
 
-    if crafter_povs==None:
-        crafter_povs = load_crafter_pictures('dataset',download=False,windowsize=windowsize)[0:100]
-        print(crafter_povs.shape)
+    if crafter_train_povs==None:
+        crafter_train_povs = load_crafter_pictures('dataset', download=False, windowsize=windowsize)[0:100]
+        print(crafter_train_povs.shape)
 
     #print(crafter_povs.shape)
 
 
-    if no_samples and no_samples<len(crafter_povs):
-        crafter_povs = choose(crafter_povs,no_choices=no_samples,replace=False)
+    if no_samples and no_samples<len(crafter_train_povs):
+        crafter_train_povs = choose(crafter_train_povs, no_choices=no_samples, replace=False)
 
     imgs = []
 
-    for i,crafter_pov in enumerate(crafter_povs):
+    for i,crafter_pov in enumerate(crafter_train_povs[0:no_samples]):
+
+        crafter_pov = crafter_pov.permute(2, 0, 1)
+        crafter_pov = crafter_pov.unsqueeze(0)/255
+        crafter_pov = crafter_pov.to(device)
+
+        pred = critic(crafter_pov)
+        x, mu, logvar, recon= autoencoder(crafter_pov,pred)
+
+        os.makedirs('crafter_images/train_set',exist_ok=True)
+        plot_side_by_side(f'crafter_images/train_set/pov_recon_{i}.jpg',[crafter_pov, recon],labels=['original','reconstructed'],title = f"critic_value={round(torch.sigmoid(pred).item(), 2)}")
+
+    for i,crafter_pov in enumerate(crafter_test_povs[0:no_samples]):
 
         crafter_pov = crafter_pov.permute(2, 0, 1)
         crafter_pov = crafter_pov.unsqueeze(0)/255
         crafter_pov = crafter_pov.to(device)
 
 
-        x, mu, logvar, recon= autoencoder(crafter_pov,critic(crafter_pov))
-        os.makedirs('my_images',exist_ok=True)
-        plot_side_by_side(f'my_images/pov_recon_{i}.jpg',crafter_pov, recon)
+        pred = critic(crafter_pov)
+        x, mu, logvar, recon= autoencoder(crafter_pov,pred)
+
+        os.makedirs('crafter_images/test_set',exist_ok=True)
+        plot_side_by_side(f'crafter_images/test_set/pov_recon_{i}.jpg',[crafter_pov, recon],labels=['original','reconstructed'],title = f"critic_value={round(torch.sigmoid(pred).item(), 2)}")
+
 
     diff_max_values = []
-    for i, crafter_pov in tqdm(enumerate(crafter_povs),desc='evaluate_dataset_step1',total=len(crafter_povs)):
+    for i, crafter_pov in tqdm(enumerate(crafter_train_povs), desc='evaluate_dataset_step1', total=len(crafter_train_povs)):
         ### LOAD IMAGES AND PREPROCESS ###
         orig_img = crafter_pov
         img_array = adjust_values(orig_img)
@@ -202,7 +289,17 @@ def crafter_image_evaluate(autoencoder, critic,crafter_povs=None,inject=False,no
             save_img.save(f'{SAVE_PATH}/image-{i:03d}.png', format="png")
 
 
-def load_crafter_data(critic, recon_dset=False, vae=None,dataset_size=45000,windowsize=None):
+def load_crafter_data(critic, dataset_size=45000,windowsize=None,test_split=0.2):
+    """
+
+
+    :param critic: critic trained to predict reward on crafter
+    :param dataset_size: how many pictures to train on
+    :param windowsize: windowsize in steps before and after reward
+    :param test_split:
+    :return:
+    """
+
     print("loading minerl-data...")
 
     ### Initialize mineRL dataset ###
@@ -210,7 +307,10 @@ def load_crafter_data(critic, recon_dset=False, vae=None,dataset_size=45000,wind
     pictures = load_crafter_pictures('dataset',windowsize=windowsize)
 
     pictures = torch.tensor(pictures).permute(0, 3, 1, 2) / 255
+    print('here!!!!',pictures.shape)
     pictures = pictures[:, :, 0:48]
+    pictures, pictures_test = train_test_split(pictures,test_size=test_split,shuffle=True,random_state = 71)
+    #pictures, pictures_test =
 
     critic_values = nn.Sigmoid()(critic.evaluate(pictures,batchsize=100))
     critic_values = critic_values.cpu()
@@ -230,10 +330,10 @@ def load_crafter_data(critic, recon_dset=False, vae=None,dataset_size=45000,wind
 
     samples_ix = np.concatenate((low_samples_ix, med_samples_ix, high_samples_ix))
 
-    dset=pictures[samples_ix]
+    dset_train=pictures[samples_ix]
 
-
-    return dset
+    print('this!',dset_train.shape,pictures_test.shape)
+    return dset_train, pictures_test
 
 def load_crafter_pictures(replay_dir, target_inventory_item='inventory_wood', download=True, interpolate_to_float=False,windowsize=None):
     X, _ ,_ = collect_data(replay_dir, target_inventory_item, download, interpolate_to_float,windowsize)
