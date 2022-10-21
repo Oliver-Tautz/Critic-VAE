@@ -96,7 +96,7 @@ def train_on_crafter(autoencoder,critic, dset, logger=None,epochs=0, test_data =
                      'recon_loss_eval':[],
                      'KLD_eval':[]}
 
-    for ep in trange(epochs, desc='train_epochs'):  # change
+    for ep in trange(epochs, desc='train_epochs',position=0,leave=True):  # change
         autoencoder.train()
         epoch_indices = np.arange(num_samples)
         epoch_indices_eval = np.arange(num_samples_eval)
@@ -111,7 +111,7 @@ def train_on_crafter(autoencoder,critic, dset, logger=None,epochs=0, test_data =
                      'KLD_eval':[]}
 
 
-        for batch_i in trange(0, num_samples, batch_size, desc='train_batches'):
+        for batch_i in trange(0, num_samples, batch_size, desc='train_batches',position=0,leave=True):
             # NOTE: this will cut off incomplete batches from end of the random indices
             batch_indices = epoch_indices[batch_i:batch_i + batch_size]
             images = dset[batch_indices]
@@ -154,7 +154,7 @@ def train_on_crafter(autoencoder,critic, dset, logger=None,epochs=0, test_data =
         autoencoder.eval()
 
         with torch.no_grad():
-            for batch_i in trange(0,  num_samples_eval, batch_size, desc='eval_batches'):
+            for batch_i in trange(0,  num_samples_eval, batch_size, desc='eval_batches',position=0,leave=True):
                 # NOTE: this will cut off incomplete batches from end of the random indices
                 batch_indices = epoch_indices_eval[batch_i:batch_i + batch_size]
                 images = test_data[batch_indices]
