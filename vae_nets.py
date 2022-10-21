@@ -224,7 +224,7 @@ class MSSIM(nn.Module):
         levels = weights.size()[0]
         mssim = []
         mcs = []
-        print(img1.shape,img2.shape)
+
         for _ in range(levels):
             sim, cs = self.ssim(img1, img2,
                                 self.window_size,

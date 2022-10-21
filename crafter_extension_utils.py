@@ -83,21 +83,30 @@ def train_on_crafter(autoencoder,critic, dset, logger=None,epochs=0, test_data =
 
     opt = torch.optim.AdamW(autoencoder.parameters())
     num_samples = dset.shape[0]
+    num_samples_eval = test_data.shape[0]
 
     # Start training
 
     training_data = {'total_loss':[],
                      'recon_loss':[],
-                     'KLD':[]}
+                     'KLD': [],
+                     'total_loss_eval':[],
+                     'recon_loss_eval':[],
+                     'KLD_eval':[]}
 
     for ep in trange(epochs, desc='train_epochs'):  # change
+        autoencoder.train()
         epoch_indices = np.arange(num_samples)
         np.random.shuffle(epoch_indices)
 
         epoch_data = {'total_loss':[],
                      'recon_loss':[],
-                     'KLD':[]}
-        images_to_plot = dset[0:2]
+                     'KLD': [],
+                     'total_loss_eval':[],
+                     'recon_loss_eval':[],
+                     'KLD_eval':[]}
+
+
         for batch_i in trange(0, num_samples, batch_size, desc='train_batches'):
             # NOTE: this will cut off incomplete batches from end of the random indices
             batch_indices = epoch_indices[batch_i:batch_i + batch_size]
@@ -138,27 +147,61 @@ def train_on_crafter(autoencoder,critic, dset, logger=None,epochs=0, test_data =
                 if logger is not None:
                     log_info(losses, logger, batch_i, ep, num_samples)
 
-        os.makedirs('crafter_images/images_per_epoch',exist_ok=True)
+        autoencoder.eval()
 
-        # plot some images through time
-        plot_predictions(autoencoder,critic,[train_ims[0],test_ims[0]],f'crafter_images/images_per_epoch/pov_recon_{ep}.jpg')
+        with torch.no_grad():
+            for batch_i in trange(0,  num_samples_eval, batch_size, desc='eval_batches'):
+                # NOTE: this will cut off incomplete batches from end of the random indices
+                batch_indices = epoch_indices[batch_i:batch_i + batch_size]
+                images = test_data[batch_indices]
+
+                images = Tensor(images).to(device)
+                preds = critic.evaluate(images)
 
 
-        # save some predictions after every 10 steps
-        makedirs("crafter_vae_checkpoint",exist_ok=True)
-        if ep%10 == 0 :
+                # print('preds:', preds.shape)
+                # print('preds:', preds.shape)
 
-            torch.save(autoencoder.encoder.state_dict(), f"crafter_vae_checkpoint/encoder-epoch={ep}")
-            torch.save(autoencoder.decoder.state_dict(), f"crafter_vae_checkpoint/decoder-epoch={ep}" )
+                out = autoencoder(images, preds)
 
-            # load with
-            #         vae.encoder.load_state_dict(torch.load(enc_path))
-            #         vae.decoder.load_state_dict(torch.load(dec_path))
+                # print(out[0].shape,out[1].shape)
 
-        training_data['total_loss'].append(np.mean(epoch_data['total_loss']))
-        training_data['recon_loss'].append(np.mean(epoch_data['recon_loss']))
-        training_data['KLD'].append(np.mean(epoch_data['KLD']))
-        pd.DataFrame(training_data).to_csv('log.csv')
+                losses = autoencoder.vae_loss(out[0], out[1], out[2], out[3])
+
+                epoch_data['total_loss_eval'].append(losses['total_loss'].cpu().detach())
+                epoch_data['recon_loss_eval'].append(losses['recon_loss'].cpu().detach())
+                epoch_data['KLD_eval'].append(losses['KLD'].cpu().detach())
+
+
+            os.makedirs('crafter_images/images_per_epoch',exist_ok=True)
+
+            # plot some images through time
+            plot_predictions(autoencoder,critic,[train_ims[0],test_ims[0]],f'crafter_images/images_per_epoch/pov_recon_{ep}.jpg')
+
+
+            # save some predictions after every 10 steps
+            makedirs("crafter_models/crafter_vae_checkpoint",exist_ok=True)
+            if ep%10 == 0 :
+
+                torch.save(autoencoder.encoder.state_dict(), f"crafter_models/crafter_vae_checkpoint/encoder-epoch={ep}")
+                torch.save(autoencoder.decoder.state_dict(), f"crafter_models/crafter_vae_checkpoint/decoder-epoch={ep}" )
+
+                # load with
+                #         vae.encoder.load_state_dict(torch.load(enc_path))
+                #         vae.decoder.load_state_dict(torch.load(dec_path))
+
+
+
+            training_data['total_loss'].append(np.mean(epoch_data['total_loss']))
+            training_data['recon_loss'].append(np.mean(epoch_data['recon_loss']))
+            training_data['KLD'].append(np.mean(epoch_data['KLD']))
+
+            training_data['total_loss_eval'].append(np.mean(epoch_data['total_loss_eval']))
+            training_data['recon_loss_eval'].append(np.mean(epoch_data['recon_loss_eval']))
+            training_data['KLD_eval'].append(np.mean(epoch_data['KLD_eval']))
+
+
+            pd.DataFrame(training_data).to_csv('crafter_training_log.csv')
 
 
 
@@ -213,11 +256,11 @@ def crafter_image_evaluate(autoencoder, critic, crafter_train_povs=None,crafter_
     """
 
     print('evaluating source images...')
-    print(crafter_train_povs.shape,crafter_test_povs.shape)
+
 
     if crafter_train_povs==None:
         crafter_train_povs = load_crafter_pictures('dataset', download=False, windowsize=windowsize)[0:100]
-        print(crafter_train_povs.shape)
+        #print(crafter_train_povs.shape)
 
     #print(crafter_povs.shape)
 
@@ -307,7 +350,7 @@ def load_crafter_data(critic, dataset_size=45000,windowsize=None,test_split=0.2)
     pictures = load_crafter_pictures('dataset',windowsize=windowsize)
 
     pictures = torch.tensor(pictures).permute(0, 3, 1, 2) / 255
-    print('here!!!!',pictures.shape)
+
     pictures = pictures[:, :, 0:48]
     pictures, pictures_test = train_test_split(pictures,test_size=test_split,shuffle=True,random_state = 71)
     #pictures, pictures_test =
