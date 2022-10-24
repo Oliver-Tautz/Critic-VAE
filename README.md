@@ -27,6 +27,8 @@ After you installed it you can start the critic training with
 python crafter_extension_train_critic.py
 ```
 
+You will find the model in the `crafter_models` folder and a training log named `crafter_critic_training_log.csv` in the root folder.
+
 ## Train VAE
 
 To train the VAE use
@@ -34,4 +36,9 @@ To train the VAE use
 ```
 python vae.py -train-crafter -crafter-windowsize 20 -crafter-dataset-size 50000 -crafter-epochs 400
 ```
-You can find more detailed info in my [Project report](Critic_guided_VAE_for_Crafter.pdf).
+
+The final trained model will be in `saved-networks`, while training checkpoints can be found in `crafter_models/crafter_vae_checkpoint`. 
+
+In `crafter_images` reconstruction images of train and test set will be availeble after training. In `crafter_images/images_per_epoch` you will find reconstructions of the same image made after each epoch.
+
+More detailed info can be found in my [Project report](Critic_guided_VAE_for_Crafter.pdf).
