@@ -12,7 +12,7 @@ If you just want to train the models with different parameters you can use the g
 [Critic training on colab](https://colab.research.google.com/drive/14-KIMmQElpW2zbtTQOU2RlhOzl-rUfzM?usp=sharing) \
 [VAE training on colab](https://colab.research.google.com/drive/1YoAEnPFhnybgOPynUT_ljcY_Hoh-ilkb?usp=sharing)
 
-## Install for Local training
+## Installation for Local training
 You will need **python>=3.9.12** to run this. Just install the dependencies with 
 
 ```
