@@ -221,7 +221,7 @@ def plot_side_by_side(filename, ims, labels=None, title=None):
 
     if title:
         f.suptitle(title, y=0.8)
-    plt.savefig(filename, bbox_inches='tight',dpi=300)
+    plt.savefig(filename, bbox_inches='tight',dpi=600)
 
     plt.close(f)
     del f

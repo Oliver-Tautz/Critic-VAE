@@ -2,7 +2,7 @@ from torch import nn
 from sklearn.model_selection import train_test_split
 import torch
 from torch.optim import AdamW
-from tqdm import trange, tqdm
+from tqdm.auto import trange, tqdm
 from datasets import load_metric
 import numpy as np
 from crafter_extension_dataset import CrafterCriticDataset
@@ -114,10 +114,11 @@ class Critic(nn.Module):
                    'val_acc': []}
 
         for e in trange(epochs, desc='train_epochs', position=0, leave=True):
+
             train_metric = load_metric("accuracy")
             self.train()
             batchloss = []
-            for batch in tqdm(train_dataloader, desc='train_batches', position=0, leave=True):
+            for batch in tqdm(train_dataloader, desc='train_batches',  position = 1,leave=False):
                 x, y = batch
 
                 # print(x[0])
@@ -145,7 +146,7 @@ class Critic(nn.Module):
             with torch.no_grad():
                 eval_metric = load_metric("accuracy")
                 batchloss_eval = []
-                for batch in tqdm(eval_dataloader, desc='eval_batches', position=0, leave=True):
+                for batch in tqdm(eval_dataloader, desc='eval_batches', position=1, leave=False):
                     x, y = batch
 
                     x = x.to(device)
