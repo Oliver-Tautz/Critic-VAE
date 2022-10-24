@@ -3,7 +3,9 @@ Fork of https://github.com/lcicek/Critic-VAE
 
 Leverages the critic-model: [Critic](https://github.com/ndrwmlnk/critic-guided-segmentation-of-rewarding-objects-in-first-person-views)
 
-Train a critic CNN and a VAE on crafter images.
+Train a critic CNN and a VAE on crafter images. 
+
+More detailed info can be found in my [Project report](Critic_guided_VAE_for_Crafter.pdf).
 
 # Installation and Usage
 
@@ -40,5 +42,3 @@ python vae.py -train-crafter -crafter-windowsize 20 -crafter-dataset-size 50000 
 The final trained model will be in `saved-networks`, while training checkpoints can be found in `crafter_models/crafter_vae_checkpoint`. 
 
 In `crafter_images` reconstruction images of train and test set will be availeble after training. In `crafter_images/images_per_epoch` you will find reconstructions of the same image made after each epoch. In `images` the original difference mask done by ***lcicek*** can be found.
-
-More detailed info can be found in my [Project report](Critic_guided_VAE_for_Crafter.pdf).
