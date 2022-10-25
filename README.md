@@ -7,6 +7,8 @@ Train a critic CNN and a VAE on crafter images.
 
 More detailed info can be found in my [project report](Critic_guided_VAE_for_Crafter.pdf).
 
+The graphics used in the report can be recreated using [notebooks/plots_and_picutres.ipynb](notebooks/plots_and_picutres.ipynb)
+
 # Installation and Usage
 
 If you just want to train the models with different parameters you can use the google colab implemetations:
