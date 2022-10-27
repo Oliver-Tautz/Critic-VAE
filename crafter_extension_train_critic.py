@@ -32,6 +32,9 @@ X = X[:, :, 0:49]
 critic = Critic()
 history = critic.fit_on_crafter(X, Y, batch_size=batchsize, epochs=epochs, dataset_size=dataset_size)
 
+history['train_acc'] = [x['accuracy'] for x in history['train_acc']]
+history['val_acc'] = [x['accuracy'] for x in history['val_acc']]
+
 # save history
 pd.DataFrame(history).to_csv('crafter_critic_training_log.csv')
 
