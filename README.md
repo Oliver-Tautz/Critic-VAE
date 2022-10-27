@@ -1,5 +1,5 @@
 # Critic-Variational Autoencoder for Crafter
-Fork of https://github.com/lcicek/Critic-VAE
+Fork of https://github.com/lcicek/Critic-VAE. I adapted the model made by ***lcicek*** and applied it to crafter.
 
 Leverages the critic-model: [Critic](https://github.com/ndrwmlnk/critic-guided-segmentation-of-rewarding-objects-in-first-person-views)
 
@@ -8,6 +8,13 @@ Train a critic CNN and a VAE on crafter images.
 More detailed info can be found in my [project report](Critic_guided_VAE_for_Crafter.pdf).
 
 The graphics used in the report can be recreated using [notebooks/plots_and_picutres.ipynb](notebooks/plots_and_picutres.ipynb)
+
+# What does it do?
+
+The critic learns to predict if the reward (Trees) are present or not in a frame. After training the critic the VAE is trained to reconstruct the frames while being supplied the trained critics prediction in latent space. After succesful training the VAE can hallucinate Trees into an empty picture given a high critic value and remove them given a low value. One possible application is to use the difference between high and low value reconstructions to mask the reward. An example:
+
+
+
 
 # Installation and Usage
 
