@@ -1,4 +1,4 @@
-# critic-vae-masks-for-crafter 
+# Critic Vae Masks For Crafter 
 Fork of https://github.com/lcicek/Critic-VAE. I adapted the model made by ***lcicek*** and applied it to crafter.
 
 Leverages the critic-model: [Critic](https://github.com/ndrwmlnk/critic-guided-segmentation-of-rewarding-objects-in-first-person-views)
