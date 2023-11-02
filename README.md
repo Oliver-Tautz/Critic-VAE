@@ -5,7 +5,7 @@ Leverages the critic-model: [Critic](https://github.com/ndrwmlnk/critic-guided-s
 
 Train a critic CNN and a VAE on crafter images. 
 
-More detailed info can be found in my [project report](Critic_guided_VAE_for_Crafter.pdf).
+More detailed info can be found in my [project report](docs/Critic_guided_VAE_for_Crafter.pdf).
 
 The graphics used in the report can be recreated using [notebooks/plots_and_picutres.ipynb](notebooks/plots_and_picutres.ipynb)
 
